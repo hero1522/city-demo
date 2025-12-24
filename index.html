@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description"
+        content="CityFashionWear - Your happy place for shopping! Quality clothing for Men, Women & Children at amazing prices.">
+    <title>CityFashionWear - Shop Happy! 🛍️</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700;800&family=Poppins:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+
+    <!-- Font Awesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Styles -->
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+    <!-- Header / Navigation -->
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <div class="logo">
+                    <i class="fas fa-shopping-bag"></i>
+                    <span>CityFashionWear</span>
+                </div>
+
+                <nav class="nav">
+                    <a href="#home" class="nav-link">Home</a>
+                    <a href="#shop" class="nav-link">Shop</a>
+                    <a href="#about" class="nav-link">About</a>
+                    <a href="#contact" class="nav-link">Contact</a>
+                </nav>
+
+                <div class="header-actions">
+                    <button class="icon-btn" id="searchBtn" title="Search">
+                        <i class="fas fa-search"></i>
+                    </button>
+                    <button class="icon-btn cart-btn" id="cartBtn" title="Shopping Cart">
+                        <i class="fas fa-shopping-cart"></i>
+                        <span class="cart-count" id="cartCount">0</span>
+                    </button>
+                    <button class="mobile-toggle" id="mobileToggle">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="hero" id="home">
+        <div class="container">
+            <div class="hero-content">
+                <h1 class="hero-title">
+                    <span class="wave">👋</span> Welcome to Happy Shopping!
+                </h1>
+                <p class="hero-text">
+                    Discover amazing fashion for everyone in the family. Quality clothes that make you smile! 😊
+                </p>
+                <a href="#shop" class="btn btn-primary btn-large">
+                    Start Shopping <i class="fas fa-arrow-right"></i>
+                </a>
+
+                <div class="hero-features">
+                    <div class="feature-badge">
+                        <i class="fas fa-truck"></i>
+                        <span>Free Delivery</span>
+                    </div>
+                    <div class="feature-badge">
+                        <i class="fas fa-tag"></i>
+                        <span>Best Prices</span>
+                    </div>
+                    <div class="feature-badge">
+                        <i class="fas fa-heart"></i>
+                        <span>Quality First</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Shop Section -->
+    <section class="shop" id="shop">
+        <div class="container">
+            <div class="section-header">
+                <h2 class="section-title">Shop by Category</h2>
+                <p class="section-subtitle">Find the perfect outfit for everyone! 🎉</p>
+            </div>
+
+            <!-- Search Bar -->
+            <div class="search-bar" id="searchBar">
+                <i class="fas fa-search"></i>
+                <input type="text" id="searchInput" placeholder="Search for clothes...">
+                <button class="clear-search" id="clearSearch">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+
+            <!-- Category Tabs -->
+            <div class="category-tabs">
+                <button class="tab-btn active" data-category="all">
+                    <i class="fas fa-th-large"></i>
+                    <span>All Items</span>
+                </button>
+                <button class="tab-btn" data-category="men">
+                    <i class="fas fa-male"></i>
+                    <span>Men</span>
+                </button>
+                <button class="tab-btn" data-category="ladies">
+                    <i class="fas fa-female"></i>
+                    <span>Ladies</span>
+                </button>
+                <button class="tab-btn" data-category="children">
+                    <i class="fas fa-child"></i>
+                    <span>Children</span>
+                </button>
+            </div>
+
+            <!-- Products Grid -->
+            <div class="products" id="productsGrid">
+                <!-- Products will be loaded here by JavaScript -->
+                <div class="loading">
+                    <div class="spinner"></div>
+                    <p>Loading awesome products...</p>
+                </div>
+            </div>
+
+            <!-- No Results -->
+            <div class="no-results" id="noResults">
+                <i class="fas fa-sad-tear"></i>
+                <h3>Oops! No products found</h3>
+                <p>Try a different search or category</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- About Section -->
+    <section class="about" id="about">
+        <div class="container">
+            <div class="about-content">
+                <h2>Why Choose CityFashionWear? 💖</h2>
+                <p class="about-text">
+                    We believe shopping should be fun, easy, and make you happy! That's why we offer the best quality
+                    clothing
+                    for men, women, and children at prices that won't break the bank.
+                </p>
+
+                <div class="benefits">
+                    <div class="benefit-card">
+                        <div class="benefit-icon">🎁</div>
+                        <h3>Premium Quality</h3>
+                        <p>Only the best fabrics and craftsmanship for your family</p>
+                    </div>
+                    <div class="benefit-card">
+                        <div class="benefit-icon">💰</div>
+                        <h3>Great Prices</h3>
+                        <p>Affordable fashion without compromising on quality</p>
+                    </div>
+                    <div class="benefit-card">
+                        <div class="benefit-icon">🚚</div>
+                        <h3>Fast Delivery</h3>
+                        <p>Get your orders delivered quickly and safely</p>
+                    </div>
+                    <div class="benefit-card">
+                        <div class="benefit-icon">😊</div>
+                        <h3>Happy Customers</h3>
+                        <p>Join thousands of satisfied shoppers</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer" id="contact">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>CityFashionWear</h3>
+                    <p>Your happy shopping destination for quality clothing! 🛍️</p>
+                    <div class="social-links">
+                        <a href="#" class="social-btn"><i class="fab fa-facebook-f"></i></a>
+                        <a href="#" class="social-btn"><i class="fab fa-instagram"></i></a>
+                        <a href="#" class="social-btn"><i class="fab fa-twitter"></i></a>
+                        <a href="#" class="social-btn"><i class="fab fa-whatsapp"></i></a>
+                    </div>
+                </div>
+
+                <div class="footer-section">
+                    <h4>Quick Links</h4>
+                    <ul>
+                        <li><a href="#home">Home</a></li>
+                        <li><a href="#shop">Shop</a></li>
+                        <li><a href="#about">About Us</a></li>
+                        <li><a href="#contact">Contact</a></li>
+                    </ul>
+                </div>
+
+                <div class="footer-section">
+                    <h4>Shop</h4>
+                    <ul>
+                        <li><a href="#shop">Men's Fashion</a></li>
+                        <li><a href="#shop">Ladies' Fashion</a></li>
+                        <li><a href="#shop">Kids' Fashion</a></li>
+                        <li><a href="#shop">All Products</a></li>
+                    </ul>
+                </div>
+
+                <div class="footer-section">
+                    <h4>Contact Us</h4>
+                    <ul class="contact-list">
+                        <li><i class="fas fa-map-marker-alt"></i> 123 Fashion Street, City</li>
+                        <li><i class="fas fa-phone"></i> +1 234 567 8900</li>
+                        <li><i class="fas fa-envelope"></i> hello@cityfashionwear.com</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="footer-bottom">
+                <p>&copy; 2024 CityFashionWear. Made with ❤️ for happy shoppers!</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Shopping Cart Modal -->
+    <div class="modal" id="cartModal">
+        <div class="modal-overlay"></div>
+        <div class="modal-container">
+            <div class="modal-header">
+                <h3><i class="fas fa-shopping-cart"></i> Your Shopping Cart</h3>
+                <button class="close-btn" id="closeCart">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body" id="cartItems">
+                <div class="empty-cart">
+                    <i class="fas fa-shopping-bag"></i>
+                    <p>Your cart is empty</p>
+                    <p class="small">Start shopping to add items!</p>
+                </div>
+            </div>
+            <div class="modal-footer" id="cartFooter" style="display: none;">
+                <div class="cart-total">
+                    <span>Total:</span>
+                    <span class="total-amount" id="cartTotal">$0.00</span>
+                </div>
+                <button class="btn btn-primary btn-block">
+                    Proceed to Checkout <i class="fas fa-arrow-right"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Product Modal -->
+    <div class="modal" id="productModal">
+        <div class="modal-overlay"></div>
+        <div class="modal-container product-modal">
+            <button class="close-btn" id="closeProduct">
+                <i class="fas fa-times"></i>
+            </button>
+            <div class="product-details">
+                <div class="product-image-large">
+                    <img src="" alt="" id="productImage">
+                </div>
+                <div class="product-info-large">
+                    <span class="product-category-tag" id="productCategory"></span>
+                    <h2 id="productName"></h2>
+                    <div class="product-price-large" id="productPrice"></div>
+                    <p class="product-description" id="productDescription"></p>
+
+                    <div class="product-actions">
+                        <button class="btn btn-primary btn-large add-to-cart-btn">
+                            <i class="fas fa-cart-plus"></i> Add to Cart
+                        </button>
+                    </div>
+
+                    <div class="product-features">
+                        <div class="feature-item">
+                            <i class="fas fa-check-circle"></i>
+                            <span>High Quality Material</span>
+                        </div>
+                        <div class="feature-item">
+                            <i class="fas fa-check-circle"></i>
+                            <span>Comfortable & Stylish</span>
+                        </div>
+                        <div class="feature-item">
+                            <i class="fas fa-check-circle"></i>
+                            <span>Easy Care</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="config.js"></script>
+    <script src="app.js"></script>
+</body>
+
+</html>
