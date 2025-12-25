@@ -22,25 +22,25 @@ function setupEventListeners() {
     const searchBar = document.getElementById('searchBar');
     const searchInput = document.getElementById('searchInput');
     const clearSearch = document.getElementById('clearSearch');
-    
+
     searchBtn.addEventListener('click', () => {
         searchBar.classList.toggle('active');
         if (searchBar.classList.contains('active')) {
             searchInput.focus();
         }
     });
-    
+
     searchInput.addEventListener('input', (e) => {
         searchQuery = e.target.value.toLowerCase();
         renderProducts();
     });
-    
+
     clearSearch.addEventListener('click', () => {
         searchInput.value = '';
         searchQuery = '';
         renderProducts();
     });
-    
+
     // Category Tabs
     const tabButtons = document.querySelectorAll('.tab-btn');
     tabButtons.forEach(btn => {
@@ -51,37 +51,37 @@ function setupEventListeners() {
             renderProducts();
         });
     });
-    
+
     // Cart Modal
     const cartBtn = document.getElementById('cartBtn');
     const cartModal = document.getElementById('cartModal');
     const closeCart = document.getElementById('closeCart');
-    
+
     cartBtn.addEventListener('click', () => {
         cartModal.classList.add('active');
         renderCart();
     });
-    
+
     closeCart.addEventListener('click', () => {
         cartModal.classList.remove('active');
     });
-    
+
     cartModal.querySelector('.modal-overlay').addEventListener('click', () => {
         cartModal.classList.remove('active');
     });
-    
+
     // Product Modal
     const productModal = document.getElementById('productModal');
     const closeProduct = document.getElementById('closeProduct');
-    
+
     closeProduct.addEventListener('click', () => {
         productModal.classList.remove('active');
     });
-    
+
     productModal.querySelector('.modal-overlay').addEventListener('click', () => {
         productModal.classList.remove('active');
     });
-    
+
     // Smooth Scroll
     document.querySelectorAll('a[href^="#"]').forEach(link => {
         link.addEventListener('click', (e) => {
@@ -92,12 +92,20 @@ function setupEventListeners() {
             }
         });
     });
-    
+
     // Mobile Toggle (for future implementation)
     const mobileToggle = document.getElementById('mobileToggle');
     mobileToggle.addEventListener('click', () => {
         alert('Mobile menu - Coming soon! 📱');
     });
+
+    // Checkout Button - Send to Facebook Messenger
+    const checkoutBtn = document.getElementById('checkoutBtn');
+    if (checkoutBtn) {
+        checkoutBtn.addEventListener('click', () => {
+            sendToFacebookMessenger();
+        });
+    }
 }
 
 // ==============================
@@ -106,21 +114,21 @@ function setupEventListeners() {
 function renderProducts() {
     const grid = document.getElementById('productsGrid');
     const noResults = document.getElementById('noResults');
-    
+
     // Filter products
     const filtered = PRODUCTS.filter(product => {
         const matchesCategory = currentCategory === 'all' || product.category === currentCategory;
-        const matchesSearch = !searchQuery || 
+        const matchesSearch = !searchQuery ||
             product.name.toLowerCase().includes(searchQuery) ||
             product.category.toLowerCase().includes(searchQuery) ||
             (product.description && product.description.toLowerCase().includes(searchQuery));
-        
+
         return matchesCategory && matchesSearch;
     });
-    
+
     // Clear grid
     grid.innerHTML = '';
-    
+
     // Show/hide no results
     if (filtered.length === 0) {
         noResults.classList.add('active');
@@ -128,7 +136,7 @@ function renderProducts() {
     } else {
         noResults.classList.remove('active');
     }
-    
+
     // Render product cards
     filtered.forEach((product, index) => {
         const card = createProductCard(product, index);
@@ -140,7 +148,7 @@ function createProductCard(product, index) {
     const card = document.createElement('div');
     card.className = 'product-card';
     card.style.animationDelay = `${index * 0.05}s`;
-    
+
     card.innerHTML = `
         <div class="product-img">
             <img src="${product.image}" alt="${product.name}" loading="lazy">
@@ -155,21 +163,21 @@ function createProductCard(product, index) {
             </button>
         </div>
     `;
-    
+
     // Click on card opens modal
     card.addEventListener('click', (e) => {
         if (!e.target.closest('.product-btn')) {
             openProductModal(product);
         }
     });
-    
+
     // Add to cart button
     const addBtn = card.querySelector('.product-btn');
     addBtn.addEventListener('click', (e) => {
         e.stopPropagation();
         addToCart(product);
     });
-    
+
     return card;
 }
 
@@ -188,21 +196,21 @@ function getCategoryName(category) {
 // ==============================
 function openProductModal(product) {
     const modal = document.getElementById('productModal');
-    
+
     document.getElementById('productImage').src = product.image;
     document.getElementById('productImage').alt = product.name;
     document.getElementById('productCategory').textContent = getCategoryName(product.category);
     document.getElementById('productName').textContent = product.name;
     document.getElementById('productPrice').textContent = `$${product.price}`;
-    document.getElementById('productDescription').textContent = product.description || 
+    document.getElementById('productDescription').textContent = product.description ||
         'High-quality clothing item perfect for any occasion. Made with premium materials for comfort and style.';
-    
+
     // Add to cart button in modal
     const modalAddBtn = modal.querySelector('.add-to-cart-btn');
     modalAddBtn.onclick = () => {
         addToCart(product);
     };
-    
+
     modal.classList.add('active');
 }
 
@@ -212,7 +220,7 @@ function openProductModal(product) {
 function addToCart(product) {
     // Check if product already in cart
     const existing = cart.find(item => item.id === product.id);
-    
+
     if (existing) {
         existing.quantity += 1;
     } else {
@@ -221,7 +229,7 @@ function addToCart(product) {
             quantity: 1
         });
     }
-    
+
     saveCart();
     updateCartCount();
     showNotification(`${product.name} added to cart! 🎉`);
@@ -259,7 +267,7 @@ function renderCart() {
     const cartItems = document.getElementById('cartItems');
     const cartFooter = document.getElementById('cartFooter');
     const cartTotal = document.getElementById('cartTotal');
-    
+
     if (cart.length === 0) {
         cartItems.innerHTML = `
             <div class="empty-cart">
@@ -271,7 +279,7 @@ function renderCart() {
         cartFooter.style.display = 'none';
         return;
     }
-    
+
     cartItems.innerHTML = '';
     cart.forEach(item => {
         const cartItem = document.createElement('div');
@@ -287,14 +295,14 @@ function renderCart() {
                 <i class="fas fa-trash"></i>
             </button>
         `;
-        
+
         cartItem.querySelector('.cart-item-remove').addEventListener('click', () => {
             removeFromCart(item.id);
         });
-        
+
         cartItems.appendChild(cartItem);
     });
-    
+
     cartFooter.style.display = 'block';
     cartTotal.textContent = `$${getCartTotal().toFixed(2)}`;
 }
@@ -319,7 +327,7 @@ function showNotification(message) {
         animation: slideIn 0.3s ease;
     `;
     notification.textContent = message;
-    
+
     // Add animation
     const style = document.createElement('style');
     style.textContent = `
@@ -335,14 +343,57 @@ function showNotification(message) {
         }
     `;
     document.head.appendChild(style);
-    
+
     document.body.appendChild(notification);
-    
+
     // Remove after 3 seconds
     setTimeout(() => {
         notification.style.animation = 'slideIn 0.3s ease reverse';
         setTimeout(() => notification.remove(), 300);
     }, 3000);
+}
+
+// ==============================
+// Facebook Messenger Checkout
+// ==============================
+function sendToFacebookMessenger() {
+    if (cart.length === 0) {
+        alert('Your cart is empty! Add some items first.');
+        return;
+    }
+
+    // Build order message
+    let message = '🛍️ *NEW ORDER from CityFashionWear Website*\n\n';
+    message += '📦 *ORDER DETAILS:*\n';
+    message += '─────────────────\n\n';
+
+    cart.forEach((item, index) => {
+        message += `${index + 1}. ${item.name}\n`;
+        message += `   Category: ${getCategoryName(item.category)}\n`;
+        message += `   Price: $${item.price}\n`;
+        message += `   Quantity: ${item.quantity}\n`;
+        message += `   Subtotal: $${(item.price * item.quantity).toFixed(2)}\n\n`;
+    });
+
+    message += '─────────────────\n';
+    message += `💰 *TOTAL: $${getCartTotal().toFixed(2)}*\n\n`;
+    message += '📋 Please confirm your order and provide delivery details!';
+
+    // Encode message for URL
+    const encodedMessage = encodeURIComponent(message);
+
+    // Facebook Page URL
+    const facebookPageURL = 'https://www.facebook.com/cityfashionlamjung';
+
+    // Open Facebook Messenger with pre-filled message
+    // Note: Facebook Messenger link format
+    const messengerURL = `https://m.me/cityfashionlamjung?text=${encodedMessage}`;
+
+    // Try to open Messenger first, fallback to Facebook page
+    window.open(messengerURL, '_blank');
+
+    // Show confirmation notification
+    showNotification('Redirecting to Facebook Messenger... 💬');
 }
 
 // ==============================
