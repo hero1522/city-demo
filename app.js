@@ -98,14 +98,6 @@ function setupEventListeners() {
     mobileToggle.addEventListener('click', () => {
         alert('Mobile menu - Coming soon! 📱');
     });
-
-    // Checkout Button - Send to Facebook Messenger
-    const checkoutBtn = document.getElementById('checkoutBtn');
-    if (checkoutBtn) {
-        checkoutBtn.addEventListener('click', () => {
-            sendToFacebookMessenger();
-        });
-    }
 }
 
 // ==============================
@@ -305,6 +297,14 @@ function renderCart() {
 
     cartFooter.style.display = 'block';
     cartTotal.textContent = `$${getCartTotal().toFixed(2)}`;
+
+    // Setup checkout button click handler
+    const checkoutBtn = document.getElementById('checkoutBtn');
+    if (checkoutBtn) {
+        checkoutBtn.onclick = () => {
+            sendToInstagramDM();
+        };
+    }
 }
 
 // ==============================
@@ -354,17 +354,17 @@ function showNotification(message) {
 }
 
 // ==============================
-// Facebook Messenger Checkout
+// Instagram Direct Message Checkout
 // ==============================
-function sendToFacebookMessenger() {
+function sendToInstagramDM() {
     if (cart.length === 0) {
         alert('Your cart is empty! Add some items first.');
         return;
     }
 
     // Build order message
-    let message = '🛍️ *NEW ORDER from CityFashionWear Website*\n\n';
-    message += '📦 *ORDER DETAILS:*\n';
+    let message = '🛍️ NEW ORDER from CityFashionWear Website\n\n';
+    message += '📦 ORDER DETAILS:\n';
     message += '─────────────────\n\n';
 
     cart.forEach((item, index) => {
@@ -376,24 +376,150 @@ function sendToFacebookMessenger() {
     });
 
     message += '─────────────────\n';
-    message += `💰 *TOTAL: $${getCartTotal().toFixed(2)}*\n\n`;
+    message += `💰 TOTAL: $${getCartTotal().toFixed(2)}\n\n`;
     message += '📋 Please confirm your order and provide delivery details!';
 
-    // Encode message for URL
-    const encodedMessage = encodeURIComponent(message);
+    // Try to copy to clipboard
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(message).then(() => {
+            // Show success notification with instructions
+            showCheckoutNotification();
 
-    // Facebook Page URL
-    const facebookPageURL = 'https://www.facebook.com/cityfashionlamjung';
+            // Open Instagram Direct Messages after a short delay
+            setTimeout(() => {
+                window.open('https://www.instagram.com/cityfashionlamjung/', '_blank');
+            }, 1000);
+        }).catch(() => {
+            // Fallback if clipboard fails
+            showOrderSummaryModal(message);
+        });
+    } else {
+        // Fallback for browsers that don't support clipboard
+        showOrderSummaryModal(message);
+    }
+}
 
-    // Open Facebook Messenger with pre-filled message
-    // Note: Facebook Messenger link format
-    const messengerURL = `https://m.me/cityfashionlamjung?text=${encodedMessage}`;
+// Show checkout notification with instructions
+function showCheckoutNotification() {
+    const notification = document.createElement('div');
+    notification.style.cssText = `
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: white;
+        color: #2c2926;
+        padding: 2rem 2.5rem;
+        border-radius: 16px;
+        box-shadow: 0 16px 56px rgba(0, 0, 0, 0.3);
+        font-weight: 500;
+        z-index: 10001;
+        text-align: center;
+        max-width: 400px;
+        border: 2px solid #d4af37;
+    `;
 
-    // Try to open Messenger first, fallback to Facebook page
-    window.open(messengerURL, '_blank');
+    notification.innerHTML = `
+        <div style="font-size: 3rem; margin-bottom: 1rem;">✅</div>
+        <h3 style="font-size: 1.25rem; margin-bottom: 1rem; color: #0a0908;">Order Details Copied!</h3>
+        <p style="color: #4a4542; line-height: 1.6; margin-bottom: 1rem;">
+            Opening Instagram...<br>
+            <strong>Send us a DM</strong> and paste (Ctrl+V) the order details!
+        </p>
+        <div style="font-size: 2rem;">📸</div>
+    `;
 
-    // Show confirmation notification
-    showNotification('Redirecting to Facebook Messenger... 💬');
+    document.body.appendChild(notification);
+
+    // Remove after 4 seconds
+    setTimeout(() => {
+        notification.style.opacity = '0';
+        notification.style.transition = 'opacity 0.3s ease';
+        setTimeout(() => notification.remove(), 300);
+    }, 3500);
+}
+
+// Show order summary modal as fallback
+function showOrderSummaryModal(message) {
+    const modal = document.createElement('div');
+    modal.style.cssText = `
+        position: fixed;
+        inset: 0;
+        z-index: 10000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(0, 0, 0, 0.85);
+        backdrop-filter: blur(8px);
+    `;
+
+    modal.innerHTML = `
+        <div style="background: white; border-radius: 16px; max-width: 500px; width: 90%; max-height: 80vh; overflow-y: auto; padding: 2rem;">
+            <h3 style="font-family: 'Playfair Display', serif; font-size: 1.5rem; margin-bottom: 1rem; color: #0a0908;">
+                📋 Your Order Details
+            </h3>
+            <p style="color: #4a4542; margin-bottom: 1rem; line-height: 1.6;">
+                Copy this message and send it to us on Instagram:
+            </p>
+            <textarea readonly style="
+                width: 100%;
+                height: 300px;
+                padding: 1rem;
+                border: 2px solid #e5e1dc;
+                border-radius: 8px;
+                font-family: monospace;
+                font-size: 0.875rem;
+                resize: none;
+                margin-bottom: 1rem;
+            " id="orderSummaryText">${message}</textarea>
+            <div style="display: flex; gap: 1rem;">
+                <button onclick="
+                    document.getElementById('orderSummaryText').select();
+                    document.execCommand('copy');
+                    this.textContent = '✅ Copied!';
+                " style="
+                    flex: 1;
+                    padding: 1rem;
+                    background: #0a0908;
+                    color: white;
+                    border: none;
+                    border-radius: 8px;
+                    font-weight: 600;
+                    cursor: pointer;
+                ">📋 Copy Message</button>
+                <button onclick="
+                    window.open('https://www.instagram.com/cityfashionlamjung/', '_blank');
+                    this.parentElement.parentElement.parentElement.remove();
+                " style="
+                    flex: 1;
+                    padding: 1rem;
+                    background: linear-gradient(135deg, #d4af37 0%, #f4e4b7 100%);
+                    color: #0a0908;
+                    border: none;
+                    border-radius: 8px;
+                    font-weight: 600;
+                    cursor: pointer;
+                ">📸 Open Instagram</button>
+            </div>
+            <button onclick="this.parentElement.parentElement.remove()" style="
+                margin-top: 1rem;
+                width: 100%;
+                padding: 0.75rem;
+                background: transparent;
+                color: #4a4542;
+                border: 1px solid #e5e1dc;
+                border-radius: 8px;
+                cursor: pointer;
+            ">Close</button>
+        </div>
+    `;
+
+    document.body.appendChild(modal);
+
+    // Select text automatically
+    setTimeout(() => {
+        document.getElementById('orderSummaryText').select();
+    }, 100);
 }
 
 // ==============================
