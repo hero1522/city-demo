@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CityFashionWear</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6155571654689247"
+        crossorigin="anonymous"></script>
+</head>
+
+<body>
+
+    <header>
+        <nav>
+            <a href="#" class="logo">CityFashionWear</a>
+            <div class="hamburger-menu">
+                <i class="fas fa-bars"></i>
+            </div>
+            <div class="nav-links">
+                <button class="filter-btn active" data-filter="all" data-sub="all">All</button>
+
+                <div class="dropdown">
+                    <button class="filter-btn" data-filter="Men" data-sub="all">Men <i
+                            class="fas fa-chevron-down"></i></button>
+                    <div class="dropdown-content">
+                        <a href="#" data-filter="Men" data-sub="all">All Men</a>
+                        <a href="#" data-filter="Men" data-sub="shirt">T-Shirts</a>
+                    </div>
+                </div>
+
+                <button class="filter-btn" data-filter="Ladies" data-sub="all">Ladies</button>
+                <button class="filter-btn" data-filter="baby" data-sub="all">Baby</button>
+            </div>
+        </nav>
+    </header>
+
+    <section class="hero">
+        <h1>Premium Collection</h1>
+        <p>Discover the latest trends in city fashion.</p>
+
+        <div class="social-buttons">
+            <a href="https://www.facebook.com/cityfashionlamjung/" target="_blank" class="social-btn fb"><i
+                    class="fab fa-facebook-f"></i> Shop
+                on Facebook</a>
+            <a href="https://www.instagram.com/cityfashionlamjung/" target="_blank" class="social-btn insta"><i
+                    class="fab fa-instagram"></i>
+                Shop on Insta</a>
+            <a href="https://www.tiktok.com/@cityfashion_wear" target="_blank" class="social-btn tiktok"><i
+                    class="fab fa-tiktok"></i> Shop on
+                TikTok</a>
+            <a href="https://wa.me/9779846181027" target="_blank" class="social-btn whatsapp"><i
+                    class="fab fa-whatsapp"></i>
+                Shop on WhatsApp</a>
+        </div>
+    </section>
+
+    <!-- Global Ad Placement -->
+    <div class="global-ad-container">
+        <script async="async" data-cfasync="false"
+            src="https://pl26742362.effectivegatecpm.com/36aa5a343b72c4a830607cdf2edc2255/invoke.js"></script>
+        <div id="container-36aa5a343b72c4a830607cdf2edc2255"></div>
+    </div>
+
+    <div class="container">
+        <!-- Breadcrumb Navigation -->
+        <div id="breadcrumb" class="breadcrumb"></div>
+
+        <!-- Mobile Filters (visible if screen small via CSS tweaks if needed, but for now relying on top nav) -->
+        <div class="product-grid" id="productGrid">
+            <!-- Products will be loaded here dynamically -->
+        </div>
+
+        <!-- Pagination -->
+        <div id="pagination" class="pagination"></div>
+    </div>
+
+    <!-- Lightbox Modal -->
+    <div id="lightbox" class="lightbox">
+        <span class="close-btn">&times;</span>
+        <div class="lightbox-content">
+            <img id="lightbox-img" src="" alt="Full Screen">
+        </div>
+    </div>
+
+    <script src="products.js"></script>
+    <script src="app.js"></script>
+</body>
+
+</html>
