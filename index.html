@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CityFashionWear</title>
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
+    <link rel="shortcut icon" type="image/x-icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css?v=41">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+
+<body>
+
+    <div id="parallax-wrapper">
+        <header>
+            <nav>
+                <a href="#" class="logo">CityFashionWear</a>
+
+                <div class="hamburger-menu">
+                    <i class="fas fa-bars"></i>
+                </div>
+                <div class="nav-links">
+                    <button class="filter-btn active" data-filter="all" data-sub="all">All</button>
+
+                    <div class="dropdown">
+                        <button class="filter-btn" data-filter="Men" data-sub="all">Men <i
+                                class="fas fa-chevron-down"></i></button>
+                        <div class="dropdown-content">
+                            <a href="#" data-filter="Men" data-sub="all">All Men</a>
+                            <a href="#" data-filter="Men" data-sub="shirt">T-Shirts</a>
+                        </div>
+                    </div>
+
+                    <button class="filter-btn" data-filter="Ladies" data-sub="all">Ladies</button>
+                    <button class="filter-btn" data-filter="baby" data-sub="all">Baby</button>
+                </div>
+            </nav>
+        </header>
+
+        <!-- Dedicated Search Bar Row -->
+        <div class="search-bar-row">
+            <div class="search-wrapper">
+                <input type="text" id="search-input" placeholder="Search by code, name, or category...">
+                <button id="search-btn"><i class="fas fa-search"></i></button>
+            </div>
+        </div>
+
+        <section class="hero">
+            <h1>Premium Collection</h1>
+            <p>Discover the latest trends in city fashion.</p>
+
+            <div class="social-buttons">
+                <a href="https://www.facebook.com/cityfashionlamjung/" target="_blank" class="social-btn fb"><i
+                        class="fab fa-facebook-f"></i> Shop
+                    on Facebook</a>
+                <a href="https://www.instagram.com/cityfashionlamjung/" target="_blank" class="social-btn insta"><i
+                        class="fab fa-instagram"></i>
+                    Shop on Insta</a>
+                <a href="https://www.tiktok.com/@cityfashion_wear" target="_blank" class="social-btn tiktok"><i
+                        class="fab fa-tiktok"></i> Shop on
+                    TikTok</a>
+                <a href="https://wa.me/9779846181027" target="_blank" class="social-btn whatsapp"><i
+                        class="fab fa-whatsapp"></i>
+                    Shop on WhatsApp</a>
+            </div>
+        </section>
+
+        <div class="container">
+            <!-- Breadcrumb Navigation -->
+            <div id="breadcrumb" class="breadcrumb"></div>
+
+            <!-- Mobile Filters (visible if screen small via CSS tweaks if needed, but for now relying on top nav) -->
+            <div class="product-grid" id="productGrid">
+                <!-- Products will be loaded here dynamically -->
+            </div>
+
+            <!-- Pagination -->
+            <div id="pagination" class="pagination"></div>
+        </div>
+    </div>
+
+    <!-- Floating Cart Icon -->
+    <div id="cart-icon" class="cart-icon">
+        <i class="fas fa-shopping-cart"></i>
+        <span id="cart-count" class="cart-count">0</span>
+    </div>
+
+    <!-- Cart Modal -->
+    <div id="cart-modal" class="cart-modal">
+        <div class="cart-content">
+            <div class="cart-header">
+                <h2>Your Cart</h2>
+                <span id="clear-cart-btn" class="clear-cart-btn" title="Clear Cart"><i class="fas fa-trash-alt"></i>
+                    Clear All</span>
+                <span class="close-cart">&times;</span>
+            </div>
+            <div id="cart-items" class="cart-items">
+                <!-- Items will be injected here -->
+                <p class="empty-cart-msg">Your cart is empty.</p>
+            </div>
+            <div class="cart-footer">
+                <button id="checkout-btn" class="checkout-btn">
+                    <i class="fab fa-whatsapp"></i> Checkout on WhatsApp
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- TikTok-Style Video Modal -->
+    <div id="video-modal" class="video-modal" style="display: none;">
+        <div class="reel-container">
+            <!-- Top Controls -->
+            <div class="reel-top-controls">
+                <!-- Auto Scroll Toggle Removed -->
+                <!-- Close Button -->
+                <button class="reel-btn close-reel" onclick="closeVideoModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+
+            <video id="main-video-player" controls playsinline>
+                Your browser does not support the video tag.
+            </video>
+
+            <!-- Right Side Controls Overlay -->
+            <div class="reel-controls">
+                <button class="reel-btn close-reel" onclick="closeVideoModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+                <button class="reel-btn auto-scroll-reel" onclick="toggleAutoScroll()">
+                    <i class="fas fa-sync-alt"></i>
+                </button>
+                <button class="reel-btn speed-reel" onclick="toggleVideoSpeed()">
+                    <span id="speed-text">1x</span>
+                </button>
+                <button class="reel-btn love-reel" onclick="loveProductReel()">
+                    <i class="fas fa-heart"></i>
+                </button>
+                <!-- Cart button redundant if Love adds to cart, but user asked for "add to cart button too" -->
+                <button class="reel-btn cart-reel" onclick="addToCartReel()">
+                    <i class="fas fa-shopping-cart"></i>
+                </button>
+                <button class="reel-btn share-reel" onclick="shareVideoToWhatsApp()">
+                    <i class="fab fa-whatsapp"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer Section -->
+    <footer class="site-footer">
+        <div class="footer-container">
+            <!-- Quick Links -->
+            <div class="footer-col">
+                <h3>Quick Links</h3>
+                <ul class="footer-links">
+                    <li><a href="#" onclick="window.scrollTo({top: 0, behavior: 'smooth'}); return false;"><i
+                                class="fas fa-home"></i> Home</a></li>
+                    <li><a href="#"
+                            onclick="document.querySelector('[data-filter=\'Men\']').click(); window.scrollTo({top: 0, behavior: 'smooth'}); return false;"><i
+                                class="fas fa-male"></i> Men's Collection</a></li>
+                    <li><a href="#"
+                            onclick="document.querySelector('[data-filter=\'Ladies\']').click(); window.scrollTo({top: 0, behavior: 'smooth'}); return false;"><i
+                                class="fas fa-female"></i> Ladies' Collection</a></li>
+                    <li><a href="#"
+                            onclick="document.querySelector('[data-filter=\'baby\']').click(); window.scrollTo({top: 0, behavior: 'smooth'}); return false;"><i
+                                class="fas fa-baby"></i> Kids' Collection</a></li>
+                </ul>
+            </div>
+
+            <!-- Customer Service -->
+            <div class="footer-col">
+                <h3>Customer Service</h3>
+                <ul class="footer-links">
+                    <li><i class="fas fa-shipping-fast"></i> <strong>Fast Delivery Across Nepal</strong></li>
+                    <li><i class="fas fa-undo-alt"></i> <strong>Easy Returns</strong> — 7-day return policy</li>
+                    <li><i class="fas fa-shield-alt"></i> <strong>Quality Guarantee</strong> — 100% authentic products
+                    </li>
+                    <li><i class="fas fa-headset"></i> <strong>24/7 Support</strong> via WhatsApp</li>
+                </ul>
+            </div>
+
+            <!-- Contact & Social -->
+            <div class="footer-col">
+                <h3>Contact Us</h3>
+                <ul class="contact-info">
+                    <li><a href="#" onclick="openLocation(event)" class="footer-link"><i
+                                class="fas fa-map-marker-alt"></i> Besishahar, Lamjung, Nepal</a></li>
+                    <li><a href="tel:+9779846181027" class="footer-link"><i class="fas fa-phone"></i> +977
+                            9846181027</a></li>
+                    <li><i class="fas fa-clock"></i> Open Daily: 9 AM - 8 PM</li>
+                </ul>
+                <div class="footer-social">
+                    <a href="https://m.me/cityfashionlamjung" target="_blank" title="Facebook"><i
+                            class="fab fa-facebook-f"></i></a>
+                    <a href="https://ig.me/m/cityfashionlamjung" target="_blank" title="Instagram"><i
+                            class="fab fa-instagram"></i></a>
+                    <a href="https://www.tiktok.com/@cityfashion_wear" target="_blank" title="TikTok"><i
+                            class="fab fa-tiktok"></i></a>
+                    <a href="https://wa.me/9779846181027" target="_blank" title="WhatsApp"><i
+                            class="fab fa-whatsapp"></i></a>
+                </div>
+            </div>
+
+            <!-- About Section - Full Width Below (Only on Home) -->
+            <div class="footer-col footer-col-full-width" id="footer-about-section">
+                <h3>About CityFashionWear</h3>
+                <p class="tagline">"Your Love Wrapped in Our Fashion — Thank You!"</p>
+                <p>At City Fashion Wear, we believe fashion is more than just clothing—it's a way to express love,
+                    celebrate connections, and make moments memorable. Based in Lamjung, Nepal, we're your one-stop
+                    destination for the latest trends in Men's, Women's, and Kids' fashion that combines quality you can
+                    trust with style you'll love.</p>
+
+                <div class="about-columns">
+                    <div class="about-left">
+                        <div class="our-values">
+                            <h4>What We Stand For:</h4>
+                            <ul>
+                                <li><i class="fas fa-check-circle"></i> <strong>Premium Quality</strong> — Every piece
+                                    is
+                                    carefully curated for durability and style</li>
+                                <li><i class="fas fa-check-circle"></i> <strong>Personal Connection</strong> — We treat
+                                    each
+                                    customer like family, not just a transaction</li>
+                                <li><i class="fas fa-check-circle"></i> <strong>Fashion as a Gift</strong> — Whether
+                                    shopping
+                                    for yourself or that special someone, we make every purchase feel personal</li>
+                                <li><i class="fas fa-check-circle"></i> <strong>Community-Driven</strong> — From
+                                    Besishahar to
+                                    across Nepal, we're building relationships, one outfit at a time</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="about-right">
+                        <p class="promise"><strong>Our Promise to You:</strong> We're grateful for every customer who
+                            chooses
+                            City Fashion Wear. Your trust, feedback, and loyalty inspire us to bring you better
+                            collections,
+                            better service, and better fashion.</p>
+
+                        <div class="footer-newsletter-inline">
+                            <h4>Newsletter</h4>
+                            <p>Subscribe for exclusive offers & new collections!</p>
+                            <form class="newsletter-form" onsubmit="handleNewsletterSignup(event)">
+                                <input type="email" placeholder="Enter your email" required>
+                                <button type="submit"><i class="fas fa-paper-plane"></i></button>
+                            </form>
+                            <p class="newsletter-note">Join our fashion family and never miss a deal!</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+
+        </div>
+
+        <!-- Payment & Shipping Info Bar (Only on Home) -->
+        <div class="footer-info-bar" id="footer-info-bar">
+            <div class="info-section">
+                <h4><i class="fas fa-credit-card"></i> We Accept</h4>
+                <div class="payment-methods">
+                    <div class="payment-icon khalti" title="Khalti">
+                        <i class="fas fa-mobile-alt"></i>
+                        <span>Khalti</span>
+                    </div>
+                    <div class="payment-icon esewa" title="eSewa">
+                        <i class="fas fa-wallet"></i>
+                        <span>eSewa</span>
+                    </div>
+                    <div class="payment-icon bank" title="Bank Transfer">
+                        <i class="fas fa-university"></i>
+                        <span>Bank Transfer</span>
+                    </div>
+                    <div class="payment-icon cod" title="Cash on Delivery">
+                        <i class="fas fa-money-bill-wave"></i>
+                        <span>Cash on Delivery</span>
+                    </div>
+                    <div class="payment-icon fonepay" title="FonePay">
+                        <i class="fas fa-credit-card"></i>
+                        <span>FonePay</span>
+                    </div>
+                    <div class="payment-icon nepalpay" title="NepalPay">
+                        <i class="fas fa-qrcode"></i>
+                        <span>NepalPay</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="info-section">
+                <h4><i class="fas fa-award"></i> Awards & Recognition</h4>
+                <div class="awards-badges">
+                    <div class="badge">
+                        <i class="fas fa-star"></i>
+                        <span>Trusted by 50000+ Customers</span>
+                    </div>
+                    <div class="badge">
+                        <i class="fas fa-certificate"></i>
+                        <span>Top Fashion Seller - Lamjung</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer Bottom -->
+        <div class="footer-bottom">
+            <p>&copy; 2026 CityFashionWear. All rights reserved. | Made with <i class="fas fa-heart"
+                    style="color: #ec4899;"></i> in Nepal</p>
+            <p class="thank-you-msg">Thank You for Being Part of Our Fashion Family! 🎉</p>
+        </div>
+    </footer>
+
+    <!-- Lightbox Modal -->
+    <div id="lightbox" class="lightbox">
+        <span class="close-btn">&times;</span>
+        <div class="lightbox-image-wrapper">
+            <img id="lightbox-img" src="" alt="Full Screen View">
+            <div id="lightbox-caption" class="lightbox-caption"></div>
+        </div>
+    </div>
+
+    <script src="products.js?v=40"></script>
+    <script src="app.js?v=40"></script>
+</body>
+
+</html>
