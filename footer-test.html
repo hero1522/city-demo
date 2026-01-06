@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Footer Toggle Test</title>
+    <style>
+        .footer-container {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            padding: 20px;
+            background: #1e293b;
+            color: white;
+        }
+
+        .footer-col {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+        }
+
+        .footer-col-full-width {
+            grid-column: 1 / -1;
+            padding: 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.3);
+            margin-top: 20px;
+        }
+
+        button {
+            margin: 10px;
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Footer About Section Toggle Test</h1>
+
+    <div style="margin: 20px;">
+        <p><strong>Test the footer visibility:</strong></p>
+        <button onclick="toggleFooterAbout('all')">Show About (Home)</button>
+        <button onclick="toggleFooterAbout('Men')">Hide About (Men)</button>
+        <button onclick="toggleFooterAbout('Ladies')">Hide About (Ladies)</button>
+        <button onclick="checkElement()">Check Element</button>
+    </div>
+
+    <div class="footer-container">
+        <div class="footer-col">
+            <h3>Quick Links</h3>
+            <p>Column 1</p>
+        </div>
+        <div class="footer-col">
+            <h3>Customer Service</h3>
+            <p>Column 2</p>
+        </div>
+        <div class="footer-col">
+            <h3>Contact Us</h3>
+            <p>Column 3</p>
+        </div>
+
+        <!-- About Section - Should appear/disappear -->
+        <div class="footer-col footer-col-full-width" id="footer-about-section">
+            <h3>About CityFashionWear</h3>
+            <p>"Your Love Wrapped in Our Fashion — Thank You!"</p>
+            <p>This section should SHOW on "Home" and HIDE on other categories.</p>
+            <div style="background: rgba(59,130,246,0.2); padding: 15px; margin-top: 10px;">
+                <h4>What We Stand For:</h4>
+                <ul>
+                    <li>Premium Quality</li>
+                    <li>Personal Connection</li>
+                    <li>Fashion as a Gift</li>
+                    <li>Community-Driven</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <div style="margin: 20px; padding: 20px; background: #f0f0f0;">
+        <h3>Console Output:</h3>
+        <div id="console-output"
+            style="font-family: monospace; white-space: pre-wrap; background: #000; color: #0f0; padding: 10px; min-height: 200px;">
+        </div>
+    </div>
+
+    <script>
+        // Override console.log to show in page
+        const consoleDiv = document.getElementById('console-output');
+        const originalLog = console.log;
+        const originalError = console.error;
+
+        console.log = function (...args) {
+            originalLog.apply(console, args);
+            consoleDiv.innerHTML += args.join(' ') + '\n';
+            consoleDiv.scrollTop = consoleDiv.scrollHeight;
+        };
+
+        console.error = function (...args) {
+            originalError.apply(console, args);
+            consoleDiv.innerHTML += '❌ ERROR: ' + args.join(' ') + '\n';
+            consoleDiv.scrollTop = consoleDiv.scrollHeight;
+        };
+
+        // Function to show/hide footer About section
+        function toggleFooterAbout(category) {
+            console.log('toggleFooterAbout called with category:', category);
+            const aboutSection = document.getElementById('footer-about-section');
+            console.log('About section element:', aboutSection ? 'FOUND' : 'NOT FOUND');
+
+            if (aboutSection) {
+                // Show only on home page (category === 'all')
+                if (category === 'all') {
+                    aboutSection.style.display = '';  // Use default display (grid)
+                    console.log('✓ Footer About: SHOWN (viewing all products)');
+                    console.log('  display property set to: ""');
+                } else {
+                    aboutSection.style.display = 'none';
+                    console.log('✗ Footer About: HIDDEN (viewing: ' + category + ')');
+                    console.log('  display property set to: "none"');
+                }
+                console.log('  Current computed display:', window.getComputedStyle(aboutSection).display);
+            } else {
+                console.error('Footer about section #footer-about-section not found in DOM!');
+            }
+        }
+
+        function checkElement() {
+            const aboutSection = document.getElementById('footer-about-section');
+            console.log('=== ELEMENT CHECK ===');
+            console.log('Element exists:', aboutSection ? 'YES' : 'NO');
+            if (aboutSection) {
+                console.log('Element ID:', aboutSection.id);
+                console.log('Element classes:', aboutSection.className);
+                console.log('Inline style.display:', aboutSection.style.display);
+                console.log('Computed display:', window.getComputedStyle(aboutSection).display);
+                console.log('Is visible:', aboutSection.offsetHeight > 0);
+            }
+            console.log('===================');
+        }
+
+        // Initial state - should be visible
+        console.log('Page loaded. Initial state check:');
+        checkElement();
+    </script>
+</body>
+
+</html>
