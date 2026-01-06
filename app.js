@@ -12,6 +12,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const breadcrumbContainer = document.getElementById('breadcrumb');
     const paginationContainer = document.getElementById('pagination');
 
+    // Initialize Theme Toggle
+    initializeThemeToggle();
+
     let allProducts = [];
     let currentFilteredProducts = [];
     let currentPage = 1;
@@ -483,13 +486,26 @@ document.addEventListener('DOMContentLoaded', () => {
     if (cartIcon) {
         cartIcon.onclick = () => {
             cartModal.style.display = 'flex';
+            // Push state for back button handling
+            if (!history.state || history.state.modal !== 'cart') {
+                history.pushState({ modal: 'cart' }, '', '');
+            }
         };
     }
 
+    // Function to close cart safely
+    function closeCartModal() {
+        if (!cartModal) return;
+        cartModal.style.display = 'none';
+
+        // Go back if we pushed state
+        if (history.state && history.state.modal === 'cart') {
+            history.back();
+        }
+    }
+
     if (closeCart) {
-        closeCart.onclick = () => {
-            cartModal.style.display = 'none';
-        };
+        closeCart.onclick = closeCartModal;
     }
 
     if (clearCartBtn) {
@@ -498,7 +514,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (cartModal) {
         cartModal.onclick = (e) => {
-            if (e.target === cartModal) cartModal.style.display = 'none';
+            if (e.target === cartModal) closeCartModal();
         };
     }
 
@@ -1201,7 +1217,10 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     if (searchInput) {
         searchInput.addEventListener('keyup', (e) => {
-            if (e.key === 'Enter') performSearch();
+            if (e.key === 'Enter') {
+                performSearch();
+                searchInput.blur(); // Close keyboard on mobile
+            }
         });
     }
 
@@ -1404,6 +1423,12 @@ window.addEventListener('popstate', (event) => {
     const videoModal = document.getElementById('video-modal');
     if (videoModal && videoModal.style.display === 'flex') {
         closeVideoModal();
+    }
+
+    // If Cart Modal is visible, close it
+    const cartModalPop = document.getElementById('cart-modal');
+    if (cartModalPop && cartModalPop.style.display === 'flex') {
+        cartModalPop.style.display = 'none';
     }
 });
 
@@ -1940,11 +1965,16 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // Share to WhatsApp
+// Share to WhatsApp (Direct Order)
 function shareVideoToWhatsApp() {
     const product = currentReelList[currentReelIndex];
-    const name = product ? product.name : "this product";
-    const message = encodeURIComponent(`Check out ${name} from CityFashionWear!`);
-    const url = `https://wa.me/?text=${message}`;
+    if (!product) return;
+
+    const baseUrl = window.location.href.split('?')[0];
+    const productUrl = `${baseUrl}?product=${encodeURIComponent(product.name)}`;
+    const msg = encodeURIComponent(`Hello, I want to buy: ${product.name}\n\nSee it here: ${productUrl}`);
+
+    const url = `https://wa.me/9779846181027?text=${msg}`;
     window.open(url, '_blank');
 }
 
@@ -2020,6 +2050,31 @@ function shuffleArray(array) {
 
 window.toggleAutoScroll = toggleAutoScroll;
 window.showPrevReel = showPrevReel;
+
 window.showNextReel = showNextReel;
+
+// Theme Toggle Initialization
+function initializeThemeToggle() {
+    const checkbox = document.getElementById('theme-checkbox');
+    if (!checkbox) return;
+
+    // Load saved preference
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme === 'dark') {
+        document.body.classList.add('dark-mode');
+        checkbox.checked = true;
+    }
+
+    // Toggle event
+    checkbox.addEventListener('change', () => {
+        if (checkbox.checked) {
+            document.body.classList.add('dark-mode');
+            localStorage.setItem('theme', 'dark');
+        } else {
+            document.body.classList.remove('dark-mode');
+            localStorage.setItem('theme', 'light');
+        }
+    });
+}
 
 

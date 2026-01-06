@@ -4,8 +4,20 @@
     --text-color: #334155;
     --bg-color: #f8fafc;
     --card-bg: #ffffff;
+    --header-bg: rgba(255, 255, 255, 0.9);
+    --header-text: #334155;
     --brand-navy: #0f172a;
     --brand-pink: #ec4899;
+}
+
+body.dark-mode {
+    --primary-color: #f8fafc;
+    --accent-color: #60a5fa;
+    --text-color: #e2e8f0;
+    --bg-color: #0f172a;
+    --card-bg: #1e293b;
+    --header-bg: rgba(15, 23, 42, 0.95);
+    --header-text: #f8fafc;
 }
 
 * {
@@ -16,12 +28,14 @@
 }
 
 html,
-body {
+body,
+body.dark-mode {
     margin: 0;
     padding: 0;
     overflow-x: hidden;
     width: 100%;
     position: relative;
+    transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 body {
@@ -31,13 +45,14 @@ body {
 
 /* Header */
 header {
-    background: rgba(255, 255, 255, 0.9);
+    background: var(--header-bg);
     backdrop-filter: blur(10px);
     position: sticky;
     top: 0;
     z-index: 100;
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
     padding: 1rem 5%;
+    transition: background 0.3s ease;
 }
 
 nav {
@@ -46,7 +61,16 @@ nav {
     align-items: center;
     max-width: 1400px;
     margin: 0 auto;
-    gap: 1rem;
+}
+
+.nav-left {
+    flex: 0 0 auto;
+}
+
+.nav-right {
+    display: flex;
+    align-items: center;
+    gap: 2rem;
 }
 
 .logo {
@@ -64,35 +88,91 @@ nav {
     display: inline-block;
 }
 
+body.dark-mode .logo {
+    background: linear-gradient(90deg, #fff 0%, #60a5fa 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
 .logo:hover {
     transform: scale(1.05) rotate(-1deg);
 }
 
 .nav-links {
     display: flex;
-    gap: 2rem;
-    position: static;
-    transform: none;
-    flex-direction: row;
-    background: transparent;
+    gap: 1.5rem;
+    align-items: center;
 }
 
 .filter-btn {
     background: none;
     border: none;
-    font-size: 1rem;
-    font-weight: 600;
-    color: var(--text-color);
+    font-size: 0.9rem;
+    /* Sligthly smaller for Warner-style uppercase */
+    font-weight: 700;
+    text-transform: uppercase;
+    color: var(--header-text);
     cursor: pointer;
     transition: color 0.3s ease;
-    padding: 0.5rem 1rem;
-    border-radius: 20px;
+    padding: 0.5rem 0.8rem;
+    border-radius: 4px;
+    /* More rectangular like typical nav links */
 }
 
 .filter-btn.active,
 .filter-btn:hover {
     color: var(--accent-color);
-    background-color: #eff6ff;
+    background-color: transparent;
+    /* Remove pill bg for text-link style */
+}
+
+/* Theme Toggle Switch */
+.theme-toggle-wrapper {
+    display: flex;
+    align-items: center;
+}
+
+.checkbox {
+    opacity: 0;
+    position: absolute;
+}
+
+.checkbox-label {
+    background-color: #111;
+    width: 50px;
+    height: 26px;
+    border-radius: 50px;
+    position: relative;
+    padding: 5px;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 5px;
+}
+
+.fa-moon {
+    color: #f1c40f;
+}
+
+.fa-sun {
+    color: #f39c12;
+}
+
+.checkbox-label .ball {
+    background-color: #fff;
+    width: 22px;
+    height: 22px;
+    position: absolute;
+    left: 2px;
+    top: 2px;
+    border-radius: 50%;
+    transition: transform 0.2s linear;
+}
+
+.checkbox:checked+.checkbox-label .ball {
+    transform: translateX(24px);
 }
 
 /* Hero Section */
@@ -572,16 +652,19 @@ nav {
     padding: 1rem;
     font-size: 0.9rem;
     font-weight: 600;
-    color: #94a3b8;
+    color: var(--text-color);
+    /* Was #94a3b8 */
     display: flex;
     align-items: center;
     justify-content: center;
     /* Center it nicely above grid */
     gap: 0.8rem;
     letter-spacing: 0.05em;
-    background: #fff;
+    background: var(--card-bg);
+    /* Was #fff */
     border-radius: 8px;
     /* subtle shadow? maybe too much. clean is better */
+    transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 .breadcrumb .cat-link {

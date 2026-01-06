@@ -19,25 +19,40 @@
     <div id="parallax-wrapper">
         <header>
             <nav>
-                <a href="#" class="logo">CityFashionWear</a>
-
-                <div class="hamburger-menu">
-                    <i class="fas fa-bars"></i>
+                <div class="nav-left">
+                    <a href="#" class="logo">CityFashionWear</a>
                 </div>
-                <div class="nav-links">
-                    <button class="filter-btn active" data-filter="all" data-sub="all">All</button>
 
-                    <div class="dropdown">
-                        <button class="filter-btn" data-filter="Men" data-sub="all">Men <i
-                                class="fas fa-chevron-down"></i></button>
-                        <div class="dropdown-content">
-                            <a href="#" data-filter="Men" data-sub="all">All Men</a>
-                            <a href="#" data-filter="Men" data-sub="shirt">T-Shirts</a>
+                <div class="nav-right">
+                    <div class="nav-links">
+                        <button class="filter-btn active" data-filter="all" data-sub="all">ALL</button>
+
+                        <div class="dropdown">
+                            <button class="filter-btn" data-filter="Men" data-sub="all">MEN <i
+                                    class="fas fa-chevron-down"></i></button>
+                            <div class="dropdown-content">
+                                <a href="#" data-filter="Men" data-sub="all">All Men</a>
+                                <a href="#" data-filter="Men" data-sub="shirt">T-Shirts</a>
+                            </div>
                         </div>
+
+                        <button class="filter-btn" data-filter="Ladies" data-sub="all">LADIES</button>
+                        <button class="filter-btn" data-filter="baby" data-sub="all">BABY</button>
                     </div>
 
-                    <button class="filter-btn" data-filter="Ladies" data-sub="all">Ladies</button>
-                    <button class="filter-btn" data-filter="baby" data-sub="all">Baby</button>
+                    <!-- Theme Toggle -->
+                    <div class="theme-toggle-wrapper">
+                        <input type="checkbox" class="checkbox" id="theme-checkbox">
+                        <label for="theme-checkbox" class="checkbox-label">
+                            <i class="fas fa-moon"></i>
+                            <i class="fas fa-sun"></i>
+                            <span class="ball"></span>
+                        </label>
+                    </div>
+
+                    <div class="hamburger-menu">
+                        <i class="fas fa-bars"></i>
+                    </div>
                 </div>
             </nav>
         </header>
