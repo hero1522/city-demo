@@ -175,6 +175,66 @@ body.dark-mode .logo {
     transform: translateX(24px);
 }
 
+/* Language Toggle Styles - Cloned from Theme Toggle */
+.lang-toggle-wrapper {
+    display: flex;
+    align-items: center;
+}
+
+.lang-label {
+    background-color: #334155;
+    /* Default dark bg */
+    width: 60px;
+    /* Slightly wider for text */
+    height: 26px;
+    border-radius: 50px;
+    position: relative;
+    padding: 0 5px;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.7rem;
+    color: #fff;
+    font-weight: bold;
+}
+
+/* Re-use generic ball class but scope it if needed, 
+   here we assume .ball inside .lang-label works similar 
+   style reuse from .checkbox-label .ball might be tricky if not generic
+*/
+.lang-label .ball {
+    width: 20px;
+    height: 20px;
+    background-color: #fff;
+    border-radius: 50%;
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    transition: transform 0.2s linear;
+}
+
+.lang-text {
+    z-index: 1;
+    pointer-events: none;
+    /* Let clicks pass to label */
+}
+
+.lang-text.en {
+    margin-right: auto;
+    padding-left: 5px;
+}
+
+.lang-text.np {
+    margin-left: auto;
+    padding-right: 5px;
+}
+
+.checkbox:checked+.lang-label .ball {
+    transform: translateX(34px);
+    /* Adjust for wider width */
+}
+
 /* Hero Section */
 .hero {
     text-align: center;
@@ -3183,7 +3243,13 @@ html {
         display: none !important;
     }
 
+
     body.dark-mode .dropdown-content .has-children.active>.submenu {
         display: block !important;
     }
+}
+
+.product-grid {
+    padding-bottom: 50px;
+    min-height: 500px;
 }

@@ -7,7 +7,7 @@
     <title>CityFashionWear</title>
     <link rel="icon" type="image/x-icon" href="favicon.ico">
     <link rel="shortcut icon" type="image/x-icon" href="favicon.ico">
-    <link rel="stylesheet" href="style.css?v=69">
+    <link rel="stylesheet" href="style.css?v=70">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
@@ -25,20 +25,26 @@
 
                 <div class="nav-right">
                     <div class="nav-links">
-                        <button class="filter-btn active" data-filter="all" data-sub="all">ALL</button>
+                        <button class="filter-btn active" data-filter="all" data-sub="all"
+                            data-i18n="home">HOME</button>
 
                         <div class="dropdown">
-                            <button class="filter-btn" data-filter="Men" data-sub="all">MEN <i
-                                    class="fas fa-chevron-down"></i></button>
+                            <button class="filter-btn parent-btn" data-filter="Men" data-sub="all"><span
+                                    data-i18n="men">MEN</span> <i class="fas fa-chevron-down"></i></button>
                             <div class="dropdown-content">
-                                <a href="#" data-filter="Men" data-sub="all">All Men</a>
-                                <a href="#" data-filter="Men" data-sub="shirt">T-Shirts</a>
+                                <a href="#" data-filter="Men" data-sub="all" data-i18n="all_men">All Men</a>
+                                <a href="#" data-filter="Men" data-sub="shirt" data-i18n="tshirts">T-Shirts</a>
                             </div>
                         </div>
 
-                        <button class="filter-btn" data-filter="Ladies" data-sub="all">LADIES</button>
-                        <button class="filter-btn" data-filter="baby" data-sub="all">BABY</button>
+                        <button class="filter-btn parent-btn" data-filter="Ladies" data-sub="all"><span
+                                data-i18n="ladies">LADIES</span> <i
+                                class="fas fa-chevron-down mobile-only"></i></button>
+                        <button class="filter-btn parent-btn" data-filter="baby" data-sub="all"><span
+                                data-i18n="baby">BABY</span> <i class="fas fa-chevron-down mobile-only"></i></button>
                     </div>
+
+
 
                     <!-- Theme Toggle -->
                     <div class="theme-toggle-wrapper">
@@ -66,8 +72,8 @@
         </div>
 
         <section class="hero">
-            <h1>Premium Collection</h1>
-            <p>Discover the latest trends in city fashion.</p>
+            <h1 data-i18n="hero_title">Premium Collection</h1>
+            <p data-i18n="hero_subtitle">Discover the latest trends in city fashion.</p>
 
             <div class="social-buttons">
                 <a href="https://www.facebook.com/cityfashionlamjung/" target="_blank" class="social-btn fb"><i
@@ -215,14 +221,15 @@
             </div>
 
             <!-- Contact & Social -->
-            <div class="footer-col">
-                <h3>Contact Us</h3>
+            <div class="footer-col" id="contact-us-col">
+                <h3 data-i18n="contact_us">Contact Us</h3>
                 <ul class="contact-info">
                     <li><a href="#" onclick="openLocation(event)" class="footer-link"><i
-                                class="fas fa-map-marker-alt"></i> Besishahar, Lamjung, Nepal</a></li>
+                                class="fas fa-map-marker-alt"></i> <span data-i18n="address">Besishahar, Lamjung,
+                                Nepal</span></a></li>
                     <li><a href="tel:+9779846181027" class="footer-link"><i class="fas fa-phone"></i> +977
                             9846181027</a></li>
-                    <li><i class="fas fa-clock"></i> Open Daily: 9 AM - 8 PM</li>
+                    <li><i class="fas fa-clock"></i> <span data-i18n="open_daily">Open Daily: 9 AM - 8 PM</span></li>
                 </ul>
                 <div class="footer-social">
                     <a href="https://m.me/cityfashionlamjung" target="_blank" title="Facebook"><i
@@ -238,9 +245,10 @@
 
             <!-- About Section - Full Width Below (Only on Home) -->
             <div class="footer-col footer-col-full-width" id="footer-about-section">
-                <h3>About CityFashionWear</h3>
-                <p class="tagline">"Your Love Wrapped in Our Fashion — Thank You!"</p>
-                <p>At City Fashion Wear, we believe fashion is more than just clothing—it's a way to express love,
+                <h3 data-i18n="about_title">About CityFashionWear</h3>
+                <p class="tagline" data-i18n="about_tagline">"Your Love Wrapped in Our Fashion — Thank You!"</p>
+                <p data-i18n="about_desc">At City Fashion Wear, we believe fashion is more than just clothing—it's a way
+                    to express love,
                     celebrate connections, and make moments memorable. Based in Lamjung, Nepal, we're your one-stop
                     destination for the latest trends in Men's, Women's, and Kids' fashion that combines quality you can
                     trust with style you'll love.</p>
@@ -248,39 +256,48 @@
                 <div class="about-columns">
                     <div class="about-left">
                         <div class="our-values">
-                            <h4>What We Stand For:</h4>
+                            <h4 data-i18n="values_title">What We Stand For:</h4>
                             <ul>
-                                <li><i class="fas fa-check-circle"></i> <strong>Premium Quality</strong> — Every piece
-                                    is
-                                    carefully curated for durability and style</li>
-                                <li><i class="fas fa-check-circle"></i> <strong>Personal Connection</strong> — We treat
-                                    each
-                                    customer like family, not just a transaction</li>
-                                <li><i class="fas fa-check-circle"></i> <strong>Fashion as a Gift</strong> — Whether
-                                    shopping
-                                    for yourself or that special someone, we make every purchase feel personal</li>
-                                <li><i class="fas fa-check-circle"></i> <strong>Community-Driven</strong> — From
-                                    Besishahar to
-                                    across Nepal, we're building relationships, one outfit at a time</li>
+                                <li><i class="fas fa-check-circle"></i> <strong data-i18n="value_1_title">Premium
+                                        Quality</strong> — <span data-i18n="value_1_desc">Every piece
+                                        is
+                                        carefully curated for durability and style</span></li>
+                                <li><i class="fas fa-check-circle"></i> <strong data-i18n="value_2_title">Personal
+                                        Connection</strong> — <span data-i18n="value_2_desc">We treat
+                                        each
+                                        customer like family, not just a transaction</span></li>
+                                <li><i class="fas fa-check-circle"></i> <strong data-i18n="value_3_title">Fashion as a
+                                        Gift</strong> — <span data-i18n="value_3_desc">Whether
+                                        shopping
+                                        for yourself or that special someone, we make every purchase feel
+                                        personal</span></li>
+                                <li><i class="fas fa-check-circle"></i> <strong
+                                        data-i18n="value_4_title">Community-Driven</strong> — <span
+                                        data-i18n="value_4_desc">From
+                                        Besishahar to
+                                        across Nepal, we're building relationships, one outfit at a time</span></li>
                             </ul>
                         </div>
                     </div>
 
                     <div class="about-right">
-                        <p class="promise"><strong>Our Promise to You:</strong> We're grateful for every customer who
-                            chooses
-                            City Fashion Wear. Your trust, feedback, and loyalty inspire us to bring you better
-                            collections,
-                            better service, and better fashion.</p>
+                        <p class="promise"><strong data-i18n="promise_title">Our Promise to You:</strong> <span
+                                data-i18n="promise_desc">We're grateful for every customer who
+                                chooses
+                                City Fashion Wear. Your trust, feedback, and loyalty inspire us to bring you better
+                                collections,
+                                better service, and better fashion.</span></p>
 
                         <div class="footer-newsletter-inline">
-                            <h4>Newsletter</h4>
-                            <p>Subscribe for exclusive offers & new collections!</p>
+                            <h4 data-i18n="newsletter_title">Newsletter</h4>
+                            <p data-i18n="newsletter_desc">Subscribe for exclusive offers & new collections!</p>
                             <form class="newsletter-form" onsubmit="handleNewsletterSignup(event)">
-                                <input type="email" placeholder="Enter your email" required>
+                                <input type="email" placeholder="Enter your email" required
+                                    data-i18n="email_placeholder">
                                 <button type="submit"><i class="fas fa-paper-plane"></i></button>
                             </form>
-                            <p class="newsletter-note">Join our fashion family and never miss a deal!</p>
+                            <p class="newsletter-note" data-i18n="newsletter_note">Join our fashion family and never
+                                miss a deal!</p>
                         </div>
                     </div>
                 </div>
@@ -292,7 +309,7 @@
         <!-- Payment & Shipping Info Bar (Only on Home) -->
         <div class="footer-info-bar" id="footer-info-bar">
             <div class="info-section">
-                <h4><i class="fas fa-credit-card"></i> We Accept</h4>
+                <h4><i class="fas fa-credit-card"></i> <span data-i18n="we_accept">We Accept</span></h4>
                 <div class="payment-methods">
                     <div class="payment-icon khalti" title="Khalti">
                         <i class="fas fa-mobile-alt"></i>
@@ -304,11 +321,11 @@
                     </div>
                     <div class="payment-icon bank" title="Bank Transfer">
                         <i class="fas fa-university"></i>
-                        <span>Bank Transfer</span>
+                        <span data-i18n="bank_transfer">Bank Transfer</span>
                     </div>
                     <div class="payment-icon cod" title="Cash on Delivery">
                         <i class="fas fa-money-bill-wave"></i>
-                        <span>Cash on Delivery</span>
+                        <span data-i18n="cod">Cash on Delivery</span>
                     </div>
                     <div class="payment-icon fonepay" title="FonePay">
                         <i class="fas fa-credit-card"></i>
@@ -322,15 +339,15 @@
             </div>
 
             <div class="info-section">
-                <h4><i class="fas fa-award"></i> Awards & Recognition</h4>
+                <h4><i class="fas fa-award"></i> <span data-i18n="awards_title">Awards & Recognition</span></h4>
                 <div class="awards-badges">
                     <div class="badge">
                         <i class="fas fa-star"></i>
-                        <span>Trusted by 50000+ Customers</span>
+                        <span data-i18n="award_1">Trusted by 50000+ Customers</span>
                     </div>
                     <div class="badge">
                         <i class="fas fa-certificate"></i>
-                        <span>Top Fashion Seller - Lamjung</span>
+                        <span data-i18n="award_2">Top Fashion Seller - Lamjung</span>
                     </div>
                 </div>
             </div>
@@ -338,9 +355,10 @@
 
         <!-- Footer Bottom -->
         <div class="footer-bottom">
-            <p>&copy; 2026 CityFashionWear. All rights reserved. | Made with <i class="fas fa-heart"
-                    style="color: #ec4899;"></i> in Nepal</p>
-            <p class="thank-you-msg">Thank You for Being Part of Our Fashion Family! 🎉</p>
+            <p>&copy; 2026 CityFashionWear. <span data-i18n="rights_reserved">All rights reserved.</span> | <span
+                    data-i18n="made_with">Made with</span> <i class="fas fa-heart" style="color: #ec4899;"></i> <span
+                    data-i18n="in_nepal">in Nepal</span></p>
+            <p class="thank-you-msg" data-i18n="thank_you_msg">Thank You for Being Part of Our Fashion Family! 🎉</p>
         </div>
     </footer>
 
@@ -353,8 +371,8 @@
         </div>
     </div>
 
-    <script src="products.js?v=62"></script>
-    <script src="app.js?v=62"></script>
+    <script src="products.js?v=65"></script>
+    <script src="app.js?v=87"></script>
 </body>
 
 </html>
