@@ -558,7 +558,7 @@ body.dark-mode .logo {
 }
 
 .dropdown-content a:hover {
-    background-color: #f1f5f9;
+    background-color: transparent;
     color: var(--accent-color);
 }
 
@@ -607,11 +607,11 @@ body.dark-mode .logo {
         box-shadow: none;
         background: rgba(0, 0, 0, 0.02);
         padding-left: 1rem;
-        display: none;
+        display: none !important;
     }
 
     .dropdown-content .has-children.active>.submenu {
-        display: block;
+        display: block !important;
     }
 }
 
@@ -773,7 +773,7 @@ body.dark-mode .logo {
         /* Below header */
         left: 0;
         width: 100%;
-        background-color: rgba(255, 255, 255, 0.98);
+        background-color: var(--header-bg);
         flex-direction: column;
         align-items: center;
         padding: 2rem 0;
@@ -821,8 +821,43 @@ body.dark-mode .logo {
     .dropdown-content a {
         padding: 0.5rem 1rem;
         font-size: 0.9rem;
-        color: #64748b;
+        color: var(--text-color);
+        /* ADAPTIVE COLOR */
+        justify-content: center;
+        gap: 0.5rem;
     }
+
+    /* Rotate nested chevron when active */
+    .dropdown-content .has-children.active>a i {
+        transform: rotate(90deg);
+    }
+
+    /* Force no background on mobile filter buttons */
+    .filter-btn,
+    .filter-btn.active,
+    .filter-btn:hover,
+    .dropdown .filter-btn {
+        background-color: transparent !important;
+        background: none !important;
+    }
+
+    /* Mobile Navbar Adjustments */
+    .nav-right {
+        gap: 1rem;
+        /* Reduce gap */
+    }
+
+    .logo {
+        font-size: 1.4rem;
+        /* Smaller logo */
+    }
+
+    .theme-toggle-wrapper {
+        transform: scale(0.9);
+        /* Slightly smaller toggle */
+    }
+
+    /* Old overrides removed - moved to bottom of file */
 }
 
 /* Chevron rotation for mobile dropdowns */
@@ -3067,4 +3102,88 @@ html {
 .share-reel i {
     animation: spin 4s linear infinite;
     /* Slow spin */
+}
+
+/* =========================================
+   CRITICAL OVERRIDES FOR MOBILE DARK MODE
+   Placed at the end to ensure they win the cascade
+   ========================================= */
+@media (max-width: 768px) {
+
+    /* 
+       FALLBACK STRATEGY: 
+       Since background seems stuck on white, we flip the text to DARK 
+       to ensure visibility.
+    */
+    body.dark-mode .nav-links {
+        background-color: #ffffff !important;
+        /* Accept the white background */
+        color: #0f172a !important;
+        /* Make text DARK so it's visible */
+    }
+
+    /* Highlight Items */
+    body.dark-mode .nav-links .filter-btn,
+    body.dark-mode .nav-links a {
+        color: #0f172a !important;
+        /* DARK Text */
+        font-weight: 800 !important;
+        /* Extra Bold Highlight */
+        background-color: #e2e8f0;
+        /* Light highlight background */
+        padding: 0.8rem 1.5rem;
+        /* Make it look like a button */
+        border-radius: 50px;
+        /* Rounded pill shape */
+        margin-bottom: 0.5rem;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        width: 80%;
+        /* Consistent width */
+        text-align: center;
+    }
+
+    body.dark-mode .nav-links i {
+        color: #f8fafc !important;
+        /* Fix icon color too */
+    }
+
+    body.dark-mode .nav-links .filter-btn {
+        color: #f8fafc !important;
+        /* Visible white text */
+    }
+
+    body.dark-mode .nav-links {
+        background-color: #0f172a !important;
+        /* Main Dark Background */
+    }
+
+    /* Dropdowns */
+    body.dark-mode .dropdown-content {
+        background-color: #1e293b !important;
+        /* Slightly lighter for contrast or match main if preferred */
+        width: 100%;
+    }
+
+
+
+    body.dark-mode .dropdown-content a {
+        background-color: transparent !important;
+        /* No bg for sub-items */
+        box-shadow: none;
+        color: #f8fafc !important;
+        /* Light text for items */
+        font-weight: 600 !important;
+        margin: 0;
+        padding: 0.5rem;
+    }
+
+    /* Ensure submenus toggle properly in dark mode */
+    body.dark-mode .dropdown-content .submenu {
+        background-color: rgba(255, 255, 255, 0.05) !important;
+        display: none !important;
+    }
+
+    body.dark-mode .dropdown-content .has-children.active>.submenu {
+        display: block !important;
+    }
 }

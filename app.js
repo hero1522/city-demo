@@ -683,24 +683,51 @@ document.addEventListener('DOMContentLoaded', () => {
                 const isLink = el.tagName === 'A';
                 if (isLink) e.preventDefault();
 
-                // Handle Mobile Nested Toggle (Accordion)
-                // If it's a parent item in a dropdown
+                // Handle Mobile Nested Toggle (Accordion) for Submenus
                 if (window.innerWidth <= 768) {
-                    const hasChildren = el.closest('.has-children');
-                    if (hasChildren && el.parentElement === hasChildren) { // exact link click
-                        e.stopPropagation(); // prevent closing main menu
-                        hasChildren.classList.toggle('active');
+                    // Check if this link has a chevron-right icon (indicates it's a submenu parent)
+                    if (el.tagName === 'A' && el.querySelector('i.fa-chevron-right')) {
+                        const hasChildren = el.closest('.has-children');
+                        if (hasChildren) {
+                            e.stopPropagation(); // prevent closing main menu
+                            hasChildren.classList.toggle('active');
+                            return; // Stop here for submenu toggle
+                        }
+                    }
+
+                    // Handle Top-Level Mobile Dropdown Toggle (Ladies, Baby, etc)
+                    if (el.classList.contains('parent-btn')) { // It's a top level parent
+                        e.preventDefault();
+                        e.stopPropagation();
+
+                        const dropdown = el.closest('.dropdown');
+                        const wasActive = dropdown.classList.contains('active');
+
+                        // Close others
+                        document.querySelectorAll('.dropdown.active').forEach(d => {
+                            d.classList.remove('active');
+                        });
+
+                        // Toggle current (if it wasn't already active, open it)
+                        // If it WAS active, we just closed it via the remove-all loop above
+                        if (!wasActive) {
+                            dropdown.classList.add('active');
+                        }
+
+                        return; // Stop processing, don't filter yet
                     }
                 }
 
-                // Visual Active State
-                document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                // Visual Active State (skip on mobile for dropdowns to prevent toggle conflicts)
+                if (window.innerWidth > 768) {
+                    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
 
-                if (el.classList.contains('filter-btn')) {
-                    el.classList.add('active');
-                } else {
-                    const parentBtn = el.closest('.dropdown').querySelector('.filter-btn');
-                    if (parentBtn) parentBtn.classList.add('active');
+                    if (el.classList.contains('filter-btn')) {
+                        el.classList.add('active');
+                    } else {
+                        const parentBtn = el.closest('.dropdown').querySelector('.filter-btn');
+                        if (parentBtn) parentBtn.classList.add('active');
+                    }
                 }
 
                 // Filtering Data
