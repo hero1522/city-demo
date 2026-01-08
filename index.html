@@ -7,11 +7,14 @@
     <title>CityFashionWear</title>
     <link rel="icon" type="image/x-icon" href="favicon.ico">
     <link rel="shortcut icon" type="image/x-icon" href="favicon.ico">
-    <link rel="stylesheet" href="style.css?v=70">
+    <link rel="stylesheet" href="style.css?v=74">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Material Icons for TikTok-style UI -->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link rel="stylesheet" href="tiktok-modal.css">
 </head>
 
 <body>
@@ -134,57 +137,14 @@
 
     <!-- TikTok-Style Video Modal -->
     <div id="video-modal" class="video-modal" style="display: none;">
-        <div class="reel-container">
-            <!-- Top Controls -->
-            <div class="reel-top-controls">
-                <!-- Auto Scroll Toggle Removed -->
-                <!-- Close Button -->
-                <button class="reel-btn close-reel" onclick="closeVideoModal()">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-
-            <video id="main-video-player" playsinline webkit-playsinline="true">
-                Your browser does not support the video tag.
-            </video>
-
-            <!-- Center Controls Overlay -->
-            <div class="center-controls">
-                <button class="nav-center-btn up-btn" onclick="showPrevReel()"><i
-                        class="fas fa-chevron-up"></i></button>
-                <button class="nav-center-btn play-btn" onclick="togglePlayReel()"><i class="fas fa-play"></i></button>
-                <button class="nav-center-btn down-btn" onclick="showNextReel()"><i
-                        class="fas fa-chevron-down"></i></button>
-            </div>
-
-            <!-- Right Side Controls Overlay -->
-            <div class="reel-controls">
-                <button class="reel-btn close-reel" onclick="closeVideoModal()">
-                    <i class="fas fa-times"></i>
-                </button>
-
-                <!-- (Center controls removed from here) -->
-
-                <button class="reel-btn auto-scroll-reel" onclick="toggleAutoScroll()">
-                    <i class="fas fa-sync-alt"></i>
-                </button>
-
-
-                <button class="reel-btn speed-reel" onclick="toggleVideoSpeed()">
-                    <span id="speed-text">1x</span>
-                </button>
-                <button class="reel-btn love-reel" onclick="loveProductReel()">
-                    <i class="fas fa-heart"></i>
-                </button>
-                <!-- Cart button redundant if Love adds to cart, but user asked for "add to cart button too" -->
-                <button class="reel-btn cart-reel" onclick="addToCartReel()">
-                    <i class="fas fa-shopping-cart"></i>
-                </button>
-                <button class="reel-btn share-reel" onclick="shareVideoToWhatsApp()">
-                    <i class="fab fa-whatsapp"></i>
-                </button>
-            </div>
+        <div class="app__videos" id="videoContainer">
+            <!-- Videos will be dynamically loaded here in vertical scroll -->
         </div>
+
+        <!-- Close Button (Top Right) -->
+        <button class="video-modal-close-btn" onclick="closeVideoModal()">
+            <i class="fas fa-times"></i>
+        </button>
     </div>
 
     <!-- Footer Section -->
@@ -372,7 +332,8 @@
     </div>
 
     <script src="products.js?v=65"></script>
-    <script src="app.js?v=87"></script>
+    <script src="app.js?v=90"></script>
+    <script src="tiktok-modal.js"></script>
 </body>
 
 </html>
