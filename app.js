@@ -1947,21 +1947,14 @@ function createTikTokVideoElement(product, index, allVideos) {
 
 
         
-        <!-- Volume Indicator -->
+        <!-- Volume Indicator (Swipe only) -->
         <div class="video-volume-indicator">
-            <div class="volume-up-btn"><span class="material-icons">add</span></div>
             <span class="material-icons volume-main-icon">volume_up</span>
             <div class="volume-bar-container">
                 <div class="volume-bar-fill"></div>
             </div>
-            <div class="volume-down-btn"><span class="material-icons">remove</span></div>
         </div>
 
-
-        <!-- Play/Pause Indicator -->
-        <div class="play-pause-indicator">
-            <span class="material-icons">play_arrow</span>
-        </div>
 
         
         <!-- Sidebar Actions -->
@@ -1995,8 +1988,16 @@ function createTikTokVideoElement(product, index, allVideos) {
         </div>
     `;
 
+    // Force unmute and full volume on the element itself
+    const video = videoDiv.querySelector('video');
+    if (video) {
+        video.muted = false;
+        video.volume = 1.0;
+    }
+
     return videoDiv;
 }
+
 
 // Open the TikTok-style video modal
 function openVideoModal(startProductImage, productList, startIndex) {
@@ -2045,39 +2046,55 @@ function openVideoModal(startProductImage, productList, startIndex) {
         history.pushState({ modal: 'video' }, '', '');
     }
 
-    // Setup observers and interactions
-    setTimeout(() => {
-        setupTikTokVideoInteractions(videoProducts);
-        setupTikTokVideoScrollObserver();
+    // Setup observers and interactions immediately
+    setupTikTokVideoInteractions(videoProducts);
+    setupTikTokVideoScrollObserver();
 
-        // Scroll to the starting video
-        const startVideo = videoContainer.children[scrollToIndex];
-        if (startVideo) {
-            startVideo.scrollIntoView({ behavior: 'instant', block: 'start' });
+    // Scroll to the starting video
+    const startVideoContainer = videoContainer.children[scrollToIndex];
+    if (startVideoContainer) {
+        startVideoContainer.scrollIntoView({ behavior: 'instant', block: 'start' });
+
+        // Explicitly play and unmute the first video
+        const firstVideo = startVideoContainer.querySelector('.video__player');
+        if (firstVideo) {
+            firstVideo.muted = false;
+            firstVideo.volume = 1.0;
+            // Use a short delay only if necessary, but try immediately first
+            firstVideo.play().catch(err => {
+                console.log('First video play blocked, trying with muted=true as fallback:', err);
+                // If it really fails, we might have to mute, but let's try to stay unmuted
+            });
         }
-    }, 100);
+    }
 }
 
 // Setup all video interactions (tap, like, cart, share)
 function setupTikTokVideoInteractions(videoProducts) {
     const videoContainer = document.getElementById('videoContainer');
 
-    // Touch gestures for volume control
+    // Touch gestures for volume control (Right side)
     let touchStartY = 0;
     let initialVolume = 1;
     let isRightSide = false;
     let volumeIndicatorTimeout;
+
+    // Navigation gestures (Left side / General)
+    let navTouchStartY = 0;
+    let isNavigating = false;
 
     videoContainer.addEventListener('touchstart', (e) => {
         const touch = e.touches[0];
         const rect = videoContainer.getBoundingClientRect();
         const x = touch.clientX - rect.left;
 
-        // Check if touch is on the right 50% of the screen
+        touchStartY = touch.clientY;
+        navTouchStartY = touch.clientY;
+
+        // Check if touch is on the right 50% of the screen for volume
         isRightSide = x > rect.width / 2;
 
         if (isRightSide) {
-            touchStartY = touch.clientY;
             const video = e.target.closest('.video').querySelector('.video__player');
             if (video) {
                 initialVolume = video.volume;
@@ -2089,8 +2106,8 @@ function setupTikTokVideoInteractions(videoProducts) {
         if (!isRightSide) return;
 
         const touch = e.touches[0];
-        const deltaY = touchStartY - touch.clientY; // Swipe up = positive
-        const sensitivity = 200; // Pixels for 0 to 1 range
+        const deltaY = touchStartY - touch.clientY;
+        const sensitivity = 200;
 
         const video = e.target.closest('.video').querySelector('.video__player');
         if (video) {
@@ -2098,16 +2115,13 @@ function setupTikTokVideoInteractions(videoProducts) {
             newVolume = Math.max(0, Math.min(1, newVolume));
             video.volume = newVolume;
 
-            // Show volume indicator
             const indicator = e.target.closest('.video').querySelector('.video-volume-indicator');
             const fill = indicator.querySelector('.volume-bar-fill');
             const icon = indicator.querySelector('.volume-main-icon');
 
-
             fill.style.height = `${newVolume * 100}%`;
             indicator.classList.add('show');
 
-            // Update icon based on volume
             if (newVolume === 0) icon.textContent = 'volume_off';
             else if (newVolume < 0.5) icon.textContent = 'volume_down';
             else icon.textContent = 'volume_up';
@@ -2117,76 +2131,43 @@ function setupTikTokVideoInteractions(videoProducts) {
                 indicator.classList.remove('show');
             }, 1000);
         }
-    }, { passive: false }); // Need false to prevent scrolling if we want exclusive gesture? 
-    // Actually, TikTok allows scrolling too. But better to prevent default if we are adjusting volume.
-    // However, the container uses snap scroll, so we might interfere.
-    // Let's keep it passive for now and see. Actually, the user asked for "pulling up/down".
+    }, { passive: false });
 
-    // Volume buttons click handling
-    videoContainer.addEventListener('click', (e) => {
-        const upBtn = e.target.closest('.volume-up-btn');
-        const downBtn = e.target.closest('.volume-down-btn');
+    // Handle vertical navigation swipe
+    videoContainer.addEventListener('touchend', (e) => {
+        if (isNavigating) return;
+        if (isRightSide && Math.abs(touchStartY - e.changedTouches[0].clientY) > 10) return; // Ignore if it was a volume swipe
 
-        if (upBtn || downBtn) {
-            e.stopPropagation();
-            const video = e.target.closest('.video').querySelector('.video__player');
-            const indicator = e.target.closest('.video').querySelector('.video-volume-indicator');
-            const fill = indicator.querySelector('.volume-bar-fill');
-            const icon = indicator.querySelector('.volume-main-icon');
+        const touchEndY = e.changedTouches[0].clientY;
+        const deltaY = navTouchStartY - touchEndY;
+        const threshold = 50; // Minimum swipe distance
 
-            if (video) {
-                let currentVolume = video.volume;
-                if (upBtn) {
-                    currentVolume = Math.min(1, currentVolume + 0.1);
-                } else {
-                    currentVolume = Math.max(0, currentVolume - 0.1);
-                }
-                video.volume = currentVolume;
-                video.muted = false; // Unmute if they adjust volume
+        if (Math.abs(deltaY) > threshold) {
+            isNavigating = true;
+            const videoHeight = window.innerHeight;
+            const currentScroll = videoContainer.scrollTop;
+            const currentIndex = Math.round(currentScroll / videoHeight);
+            const videos = videoContainer.querySelectorAll('.video');
 
-                // Show indicator
-                fill.style.height = `${currentVolume * 100}%`;
-                indicator.classList.add('show');
-
-                // Update icon
-                if (currentVolume === 0) icon.textContent = 'volume_off';
-                else if (currentVolume < 0.5) icon.textContent = 'volume_down';
-                else icon.textContent = 'volume_up';
-
-                clearTimeout(volumeIndicatorTimeout);
-                volumeIndicatorTimeout = setTimeout(() => {
-                    indicator.classList.remove('show');
-                }, 1500);
-            }
-        }
-    });
-
-    // Tap to play/pause
-    videoContainer.addEventListener('click', (e) => {
-        if (e.target.closest('.videoSideBar') || e.target.closest('.videoFooter') ||
-            e.target.closest('.volume-up-btn') || e.target.closest('.volume-down-btn')) {
-            return;
-        }
-
-        const video = e.target.closest('.video__player');
-
-        if (video && !e.target.closest('.videoSideBar') && !e.target.closest('.videoFooter')) {
-            const indicator = video.nextElementSibling;
-            const icon = indicator.querySelector('.material-icons');
-
-            if (video.paused) {
-                video.play();
-                icon.textContent = 'play_arrow';
-            } else {
-                video.pause();
-                icon.textContent = 'pause';
+            let targetIndex = currentIndex;
+            if (deltaY > 0) { // Swipe up -> Next
+                targetIndex = Math.min(videos.length - 1, currentIndex + 1);
+            } else { // Swipe down -> Prev
+                targetIndex = Math.max(0, currentIndex - 1);
             }
 
-            // Show indicator briefly
-            indicator.classList.add('show');
-            setTimeout(() => indicator.classList.remove('show'), 500);
+            videoContainer.scrollTo({
+                top: targetIndex * videoHeight,
+                behavior: 'smooth'
+            });
+
+            // Re-enable navigation after transition
+            setTimeout(() => { isNavigating = false; }, 500);
         }
-    });
+    }, { passive: true });
+
+
+
 
     // Like button functionality
     videoContainer.addEventListener('click', (e) => {
@@ -2263,48 +2244,54 @@ function setupTikTokVideoInteractions(videoProducts) {
             e.preventDefault();
             const currentVideo = videos[currentIndex].querySelector('.video__player');
             if (currentVideo) {
-                if (currentVideo.paused) currentVideo.play();
-                else currentVideo.pause();
-
-                // Show play/pause indicator
-                const indicator = currentVideo.nextElementSibling.nextElementSibling.nextElementSibling; // Skip speed and volume indicators
-                // Actually easier to query it
-                const playIndicator = videos[currentIndex].querySelector('.play-pause-indicator');
-                if (playIndicator) {
-                    const icon = playIndicator.querySelector('.material-icons');
-                    icon.textContent = currentVideo.paused ? 'pause' : 'play_arrow';
-                    playIndicator.classList.add('show');
-                    setTimeout(() => playIndicator.classList.remove('show'), 500);
+                if (currentVideo.paused) {
+                    currentVideo.muted = false;
+                    currentVideo.volume = 1.0;
+                    currentVideo.play();
+                } else {
+                    currentVideo.pause();
                 }
             }
         }
+
     };
 
     window.addEventListener('keydown', handleKeyDown);
 
     // Share button - Click to share, Hold for 2x speed
+    let speedHoldTimer;
+    let isLongPress = false;
 
     videoContainer.addEventListener('pointerdown', (e) => {
         const shareBtn = e.target.closest('.share-btn');
         if (shareBtn) {
+            isLongPress = false;
             const video = e.target.closest('.video').querySelector('.video__player');
             const speedIndicator = e.target.closest('.video').querySelector('.speed-indicator');
-            if (video && speedIndicator) {
-                video.playbackRate = 2.0;
-                speedIndicator.classList.add('show');
-            }
+
+            // Start timer to detect long press
+            speedHoldTimer = setTimeout(() => {
+                if (video && speedIndicator) {
+                    isLongPress = true;
+                    video.playbackRate = 2.0;
+                    speedIndicator.classList.add('show');
+                }
+            }, 200); // 200ms threshold for 2x speed
         }
     });
 
     const resetSpeed = (e) => {
         const shareBtn = e.target.closest('.share-btn');
         if (shareBtn) {
+            clearTimeout(speedHoldTimer);
             const video = e.target.closest('.video').querySelector('.video__player');
             const speedIndicator = e.target.closest('.video').querySelector('.speed-indicator');
             if (video && speedIndicator) {
                 video.playbackRate = 1.0;
                 speedIndicator.classList.remove('show');
             }
+            // Delay resetting isLongPress to catch the click event
+            setTimeout(() => { if (isLongPress) isLongPress = false; }, 100);
         }
     };
 
@@ -2315,6 +2302,13 @@ function setupTikTokVideoInteractions(videoProducts) {
         const shareBtn = e.target.closest('.share-btn');
         if (shareBtn) {
             e.stopPropagation();
+
+            // If it was a long press (2x speed), don't open the share link
+            if (isLongPress) {
+                isLongPress = false;
+                return;
+            }
+
             const productName = shareBtn.dataset.product;
             const baseUrl = window.location.href.split('?')[0];
             const productUrl = `${baseUrl}?product=${encodeURIComponent(productName)}`;
@@ -2322,6 +2316,7 @@ function setupTikTokVideoInteractions(videoProducts) {
             window.open(`https://wa.me/?text=${msg}`, '_blank');
         }
     });
+
 
 }
 
@@ -2339,7 +2334,14 @@ function setupTikTokVideoScrollObserver() {
             const video = entry.target.querySelector('.video__player');
             if (entry.isIntersecting) {
                 // Play video when in view
-                video.play().catch(err => console.log('Autoplay prevented:', err));
+                video.muted = false;
+                video.volume = 1.0;
+                video.play().catch(err => {
+                    console.log('Autoplay prevented, trying muted:', err);
+                    // If blocked, some browsers allow muted autoplay as fallback
+                    // but the user wants unmuted, so we just log it.
+                });
+
             } else {
                 // Pause video when out of view
                 video.pause();
