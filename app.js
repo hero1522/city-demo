@@ -1929,11 +1929,17 @@ function createTikTokVideoElement(product, index, allVideos) {
     const videoSrc = isIOS ? product.image + '#t=0.001' : product.image;
 
     videoDiv.innerHTML = `
+        <!-- 2x Speed Indicator -->
+        <div class="speed-indicator">
+            <span class="material-icons">fast_forward</span>
+            <span>2x Speed</span>
+        </div>
+
         <video class="video__player" 
                loop="loop" 
-               muted 
                playsinline 
                webkit-playsinline="true" 
+
                data-index="${index}" 
                src="${videoSrc}"
                controls="controls">
@@ -1943,11 +1949,14 @@ function createTikTokVideoElement(product, index, allVideos) {
         
         <!-- Volume Indicator -->
         <div class="video-volume-indicator">
-            <span class="material-icons">volume_up</span>
+            <div class="volume-up-btn"><span class="material-icons">add</span></div>
+            <span class="material-icons volume-main-icon">volume_up</span>
             <div class="volume-bar-container">
                 <div class="volume-bar-fill"></div>
             </div>
+            <div class="volume-down-btn"><span class="material-icons">remove</span></div>
         </div>
+
 
         <!-- Play/Pause Indicator -->
         <div class="play-pause-indicator">
@@ -2020,8 +2029,7 @@ function openVideoModal(startProductImage, productList, startIndex) {
 
     // Clear and rebuild the video container
     videoContainer.innerHTML = '';
-
-    // Create all video elements
+    videoContainer.tabIndex = -1; // Make it focusable for keyboard events
     videoProducts.forEach((product, index) => {
         const videoElement = createTikTokVideoElement(product, index, videoProducts);
         videoContainer.appendChild(videoElement);
@@ -2029,6 +2037,7 @@ function openVideoModal(startProductImage, productList, startIndex) {
 
     // Show modal
     modal.style.display = 'flex';
+    videoContainer.focus(); // Focus for immediate keyboard support
 
 
     // Push history state for back button support
@@ -2092,7 +2101,8 @@ function setupTikTokVideoInteractions(videoProducts) {
             // Show volume indicator
             const indicator = e.target.closest('.video').querySelector('.video-volume-indicator');
             const fill = indicator.querySelector('.volume-bar-fill');
-            const icon = indicator.querySelector('.material-icons');
+            const icon = indicator.querySelector('.volume-main-icon');
+
 
             fill.style.height = `${newVolume * 100}%`;
             indicator.classList.add('show');
@@ -2112,10 +2122,54 @@ function setupTikTokVideoInteractions(videoProducts) {
     // However, the container uses snap scroll, so we might interfere.
     // Let's keep it passive for now and see. Actually, the user asked for "pulling up/down".
 
+    // Volume buttons click handling
+    videoContainer.addEventListener('click', (e) => {
+        const upBtn = e.target.closest('.volume-up-btn');
+        const downBtn = e.target.closest('.volume-down-btn');
+
+        if (upBtn || downBtn) {
+            e.stopPropagation();
+            const video = e.target.closest('.video').querySelector('.video__player');
+            const indicator = e.target.closest('.video').querySelector('.video-volume-indicator');
+            const fill = indicator.querySelector('.volume-bar-fill');
+            const icon = indicator.querySelector('.volume-main-icon');
+
+            if (video) {
+                let currentVolume = video.volume;
+                if (upBtn) {
+                    currentVolume = Math.min(1, currentVolume + 0.1);
+                } else {
+                    currentVolume = Math.max(0, currentVolume - 0.1);
+                }
+                video.volume = currentVolume;
+                video.muted = false; // Unmute if they adjust volume
+
+                // Show indicator
+                fill.style.height = `${currentVolume * 100}%`;
+                indicator.classList.add('show');
+
+                // Update icon
+                if (currentVolume === 0) icon.textContent = 'volume_off';
+                else if (currentVolume < 0.5) icon.textContent = 'volume_down';
+                else icon.textContent = 'volume_up';
+
+                clearTimeout(volumeIndicatorTimeout);
+                volumeIndicatorTimeout = setTimeout(() => {
+                    indicator.classList.remove('show');
+                }, 1500);
+            }
+        }
+    });
+
     // Tap to play/pause
     videoContainer.addEventListener('click', (e) => {
+        if (e.target.closest('.videoSideBar') || e.target.closest('.videoFooter') ||
+            e.target.closest('.volume-up-btn') || e.target.closest('.volume-down-btn')) {
+            return;
+        }
 
         const video = e.target.closest('.video__player');
+
         if (video && !e.target.closest('.videoSideBar') && !e.target.closest('.videoFooter')) {
             const indicator = video.nextElementSibling;
             const icon = indicator.querySelector('.material-icons');
@@ -2180,7 +2234,83 @@ function setupTikTokVideoInteractions(videoProducts) {
         }
     });
 
-    // Share button
+    // Keyboard navigation
+    const handleKeyDown = (e) => {
+        if (modal.style.display !== 'flex') return;
+
+        const videos = videoContainer.querySelectorAll('.video');
+        const currentScroll = videoContainer.scrollTop;
+        const videoHeight = window.innerHeight;
+        const currentIndex = Math.round(currentScroll / videoHeight);
+
+        if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            if (currentIndex < videos.length - 1) {
+                videoContainer.scrollTo({
+                    top: (currentIndex + 1) * videoHeight,
+                    behavior: 'smooth'
+                });
+            }
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            if (currentIndex > 0) {
+                videoContainer.scrollTo({
+                    top: (currentIndex - 1) * videoHeight,
+                    behavior: 'smooth'
+                });
+            }
+        } else if (e.key === ' ' || e.key === 'k') { // Space or K to play/pause
+            e.preventDefault();
+            const currentVideo = videos[currentIndex].querySelector('.video__player');
+            if (currentVideo) {
+                if (currentVideo.paused) currentVideo.play();
+                else currentVideo.pause();
+
+                // Show play/pause indicator
+                const indicator = currentVideo.nextElementSibling.nextElementSibling.nextElementSibling; // Skip speed and volume indicators
+                // Actually easier to query it
+                const playIndicator = videos[currentIndex].querySelector('.play-pause-indicator');
+                if (playIndicator) {
+                    const icon = playIndicator.querySelector('.material-icons');
+                    icon.textContent = currentVideo.paused ? 'pause' : 'play_arrow';
+                    playIndicator.classList.add('show');
+                    setTimeout(() => playIndicator.classList.remove('show'), 500);
+                }
+            }
+        }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+
+    // Share button - Click to share, Hold for 2x speed
+
+    videoContainer.addEventListener('pointerdown', (e) => {
+        const shareBtn = e.target.closest('.share-btn');
+        if (shareBtn) {
+            const video = e.target.closest('.video').querySelector('.video__player');
+            const speedIndicator = e.target.closest('.video').querySelector('.speed-indicator');
+            if (video && speedIndicator) {
+                video.playbackRate = 2.0;
+                speedIndicator.classList.add('show');
+            }
+        }
+    });
+
+    const resetSpeed = (e) => {
+        const shareBtn = e.target.closest('.share-btn');
+        if (shareBtn) {
+            const video = e.target.closest('.video').querySelector('.video__player');
+            const speedIndicator = e.target.closest('.video').querySelector('.speed-indicator');
+            if (video && speedIndicator) {
+                video.playbackRate = 1.0;
+                speedIndicator.classList.remove('show');
+            }
+        }
+    };
+
+    videoContainer.addEventListener('pointerup', resetSpeed);
+    videoContainer.addEventListener('pointerleave', resetSpeed);
+
     videoContainer.addEventListener('click', (e) => {
         const shareBtn = e.target.closest('.share-btn');
         if (shareBtn) {
@@ -2192,6 +2322,7 @@ function setupTikTokVideoInteractions(videoProducts) {
             window.open(`https://wa.me/?text=${msg}`, '_blank');
         }
     });
+
 }
 
 // Setup IntersectionObserver for auto-play on scroll
