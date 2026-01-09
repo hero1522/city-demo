@@ -138,7 +138,7 @@
     <!-- TikTok-Style Video Modal -->
     <div id="video-modal" class="video-modal" style="display: none;">
         <!-- Auto Scroll Toggle (Top Left) -->
-        <button class="video-auto-scroll-btn" onclick="toggleAutoScroll()">
+        <button id="auto-scroll-toggle" class="video-auto-scroll-btn" onclick="toggleAutoScroll()">
             <i class="fas fa-mouse"></i>
             <span class="auto-scroll-status">OFF</span>
         </button>
@@ -190,8 +190,9 @@
             <div class="footer-col" id="contact-us-col">
                 <h3 data-i18n="contact_us">Contact Us</h3>
                 <ul class="contact-info">
-                    <li><a href="#" onclick="openLocation(event)" class="footer-link"><i
-                                class="fas fa-map-marker-alt"></i> <span data-i18n="address">Besishahar, Lamjung,
+                    <li><a href="https://maps.app.goo.gl/beBVWEEzxhGrD69y5" target="_blank"
+                            onclick="openLocation(event)" class="footer-link"><i class="fas fa-map-marker-alt"></i>
+                            <span data-i18n="address">Besishahar, Lamjung,
                                 Nepal</span></a></li>
                     <li><a href="tel:+9779846181027" class="footer-link"><i class="fas fa-phone"></i> +977
                             9846181027</a></li>

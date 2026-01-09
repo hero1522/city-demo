@@ -8,9 +8,56 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // --- Global State Variables ---
+    let allProducts = [];
+    let currentFilteredProducts = [];
+    let currentPage = 1;
+    const itemsPerPage = 28;
+    let isAutoScrollEnabled = false;
+
+    // --- Global Function Assignments will be done at the end of DOMContentLoaded ---
+
     const productGrid = document.getElementById('productGrid');
     const breadcrumbContainer = document.getElementById('breadcrumb');
     const paginationContainer = document.getElementById('pagination');
+
+    // --- Global Observers for reuse ---
+
+    // 1. Intersection Observer for Video Autoplay (Lazy Loading)
+    const videoObserver = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            const video = entry.target;
+            if (entry.isIntersecting) {
+                // Play when visible
+                video.preload = 'auto'; // Start loading
+                const playPromise = video.play();
+                if (playPromise !== undefined) {
+                    playPromise.catch(error => {
+                        // Auto-play was prevented
+                        console.log('Autoplay prevented:', error);
+                    });
+                }
+            } else {
+                // Pause when out of view
+                video.pause();
+            }
+        });
+    }, {
+        threshold: 0.5 // Play when 50% visible
+    });
+
+    // 2. Intersection Observer for Card Animations
+    const cardVisibilityObserver = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('visible-scroll');
+                cardVisibilityObserver.unobserve(entry.target); // Only animate once
+            }
+        });
+    }, {
+        threshold: 0.1, // Trigger when 10% visible
+        rootMargin: '0px 0px -50px 0px' // Trigger a bit before bottom
+    });
 
     // Initialize Theme Toggle
     initializeThemeToggle();
@@ -18,10 +65,33 @@ document.addEventListener('DOMContentLoaded', () => {
 
     console.log('App Initialized');
 
-    let allProducts = [];
-    let currentFilteredProducts = [];
-    let currentPage = 1;
-    const itemsPerPage = 28; // Set to 28 items per page
+    console.log('App Initialized');
+
+    // Speed Control Variables (Global within DOMContentLoaded scope)
+    let speedHoldTimer;
+    let isLongPress = false;
+    let activeSpeedVideo = null;
+    let activeSpeedIndicator = null;
+
+    const resetSpeed = () => {
+        clearTimeout(speedHoldTimer);
+        if (activeSpeedVideo) {
+            activeSpeedVideo.playbackRate = 1.0;
+            activeSpeedVideo = null;
+        }
+        if (activeSpeedIndicator) {
+            activeSpeedIndicator.classList.remove('show');
+            activeSpeedIndicator = null;
+        }
+        // Delay resetting isLongPress to catch the click event
+        if (isLongPress) {
+            setTimeout(() => { isLongPress = false; }, 100);
+        }
+    };
+
+    // Global listeners for reliable reset
+    window.addEventListener('pointerup', resetSpeed);
+    window.addEventListener('pointercancel', resetSpeed);
 
     // Use the global 'products' variable from products.js
     if (typeof products !== 'undefined') {
@@ -78,6 +148,8 @@ document.addEventListener('DOMContentLoaded', () => {
         displayCurrentPage();
     }
 
+
+
     // Renders the specific page based on currentPage
     function displayCurrentPage() {
         const start = (currentPage - 1) * itemsPerPage;
@@ -94,29 +166,7 @@ document.addEventListener('DOMContentLoaded', () => {
         productGrid.innerHTML = '';
         let hasContent = false;
 
-        // --- Intersection Observer for Video Autoplay (Lazy Loading) ---
-        // Defined BEFORE iteration to avoid ReferenceError
-        const videoObserver = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                const video = entry.target;
-                if (entry.isIntersecting) {
-                    // Play when visible
-                    video.preload = 'auto'; // Start loading
-                    const playPromise = video.play();
-                    if (playPromise !== undefined) {
-                        playPromise.catch(error => {
-                            // Auto-play was prevented
-                            console.log('Autoplay prevented:', error);
-                        });
-                    }
-                } else {
-                    // Pause when out of view
-                    video.pause();
-                }
-            });
-        }, {
-            threshold: 0.5 // Play when 50% visible
-        });
+
 
         // 1. Render Products FIRST
         if (productsToDisplay.length > 0) {
@@ -296,24 +346,6 @@ document.addEventListener('DOMContentLoaded', () => {
             productGrid.innerHTML = '<p style="grid-column: 1/-1; text-align: center; padding: 2rem;">No products found.</p>';
         }
 
-        // --- Intersection Observer for ALL Cards (Products + Folders) ---
-        // Moved here to ensure folder cards are also animated/visible
-        const observerOptions = {
-            threshold: 0.1, // Trigger when 10% visible
-            rootMargin: '0px 0px -50px 0px' // Trigger a bit before bottom
-        };
-
-
-
-        const observer = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    entry.target.classList.add('visible-scroll');
-                    observer.unobserve(entry.target); // Only animate once
-                }
-            });
-        }, observerOptions);
-
         // Assign directions and observe all cards currently in the grid
         const allCards = productGrid.querySelectorAll('.product-card');
         allCards.forEach((card, index) => {
@@ -326,7 +358,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // Ensure opacity is 0 initially via class (handled by CSS usually, but let's be safe)
             // CSS likely has .product-card { opacity: 0; } or similar.
 
-            observer.observe(card);
+            cardVisibilityObserver.observe(card);
         });
 
     }
@@ -688,16 +720,17 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
 
                 // Visual Active State (skip on mobile for dropdowns to prevent toggle conflicts)
-                if (window.innerWidth > 768) {
-                    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                // This is now handled by handleCategoryNavigation for consistency
+                // if (window.innerWidth > 768) {
+                //     document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
 
-                    if (el.classList.contains('filter-btn')) {
-                        el.classList.add('active');
-                    } else {
-                        const parentBtn = el.closest('.dropdown').querySelector('.filter-btn');
-                        if (parentBtn) parentBtn.classList.add('active');
-                    }
-                }
+                //     if (el.classList.contains('filter-btn')) {
+                //         el.classList.add('active');
+                //     } else {
+                //         const parentBtn = el.closest('.dropdown').querySelector('.filter-btn');
+                //         if (parentBtn) parentBtn.classList.add('active');
+                //     }
+                // }
 
                 // Filtering Data
                 const filterCat = el.getAttribute('data-filter');
@@ -705,23 +738,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 if (!filterCat) return;
 
-                updateBreadcrumb(filterCat, filterSub);
+                // Centralize navigation logic
+                handleCategoryNavigation(filterCat, filterSub, true);
 
-                if (filterCat === 'all') {
-                    applyFilterAndRender(allProducts);
-                } else {
-                    let filtered = allProducts.filter(p => p.category === filterCat);
+                // Close mobile menu if open ONLY IF it's a leaf node (no further sub-items/groups)
+                // This allows parent items to expand without closing the whole menu bar
+                const isTopParent = el.classList.contains('parent-btn');
+                const isSubParent = el.tagName === 'A' && el.querySelector('.fa-chevron-right');
 
-                    if (filterSub && filterSub !== 'all') {
-                        // Inclusive Filtering: Match exact subcategory OR any children (starts with "sub/")
-                        filtered = filtered.filter(p => {
-                            if (!p.subcategory) return false;
-                            const sub = p.subcategory.trim();
-                            const filter = filterSub.trim();
-                            return sub === filter || sub.startsWith(filter + '/');
-                        });
+                if (!isTopParent && !isSubParent) {
+                    const navLinks = document.querySelector('.nav-links');
+                    if (navLinks && navLinks.classList.contains('active')) {
+                        navLinks.classList.remove('active');
                     }
-                    applyFilterAndRender(filtered);
                 }
             });
         });
@@ -856,7 +885,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Update Navbar Visual State
         document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
         // Find button that matches current filter
-        const navBtn = document.querySelector(`.filter-btn[data-filter="${filterCat}"][data-sub="all"]`);
+        const navBtn = document.querySelector(`.filter-btn[data-filter="${filterCat}"]`);
         if (navBtn) navBtn.classList.add('active');
 
         window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -1398,31 +1427,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // Smart Map Redirection
-    function openLocation(e) {
-        if (e) e.preventDefault();
 
-        // Specific Coordinates from user's Google Maps Link (Pin Location)
-        // Link: https://www.google.com/maps/place/CityFashionwear/...3d28.2311634!4d84.3775144...
-        const lat = "28.2311634";
-        const lng = "84.3775144";
-        const label = "CityFashionwear";
-
-        // Direct Google Maps URL provided by user
-        const googleMapsUrl = "https://www.google.com/maps/place/CityFashionwear/@28.2311161,84.3754652,17z/data=!4m6!3m5!1s0x39957303c8794f97:0xdbb7819cfa293da3!8m2!3d28.2311634!4d84.3775144!16s%2Fg%2F11p5_ts6wr?entry=ttu";
-
-        const userAgent = navigator.userAgent || navigator.vendor || window.opera;
-
-        // Check for iOS (iPhone, iPad, iPod)
-        if (/iPad|iPhone|iPod/.test(userAgent) && !window.MSStream) {
-            // Apple Maps: Use precise coordinates
-            window.location.href = `http://maps.apple.com/?q=${encodeURIComponent(label)}&ll=${lat},${lng}`;
-        } else {
-            // Android/Desktop: Use the exact link provided
-            window.open(googleMapsUrl, '_blank');
-        }
-    }
-    window.openLocation = openLocation;
 
     function updateImageTransform() {
         lightboxImg.style.transform = `translate(${translateX}px, ${translateY}px) scale(${currentZoom})`;
@@ -1437,18 +1442,30 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Handle Browser Back Button
     window.addEventListener('popstate', (event) => {
-        // If lightbox is visible, close it
+        // 1. Lightbox Closure
         if (lightbox && lightbox.style.display === 'flex') {
             closeLightboxUI();
         }
 
-        // If Video Modal is visible, close it
+        // 2. Video Modal Closure (TikTok style)
         const videoModal = document.getElementById('video-modal');
         if (videoModal && videoModal.style.display === 'flex') {
-            closeVideoModal();
+            // Close logic that doesn't trigger history.back()
+            videoModal.style.display = 'none';
+            const videoContainer = document.getElementById('videoContainer');
+            if (videoContainer) {
+                const videos = videoContainer.querySelectorAll('video');
+                videos.forEach(v => {
+                    v.playbackRate = 1.0;
+                    v.pause();
+                    v.src = '';
+                });
+                videoContainer.innerHTML = '';
+                resetSpeed();
+            }
         }
 
-        // If Cart Modal is visible, close it
+        // 3. Cart Modal Closure
         const cartModalPop = document.getElementById('cart-modal');
         if (cartModalPop && cartModalPop.style.display === 'flex') {
             cartModalPop.style.display = 'none';
@@ -1541,27 +1558,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // OLD openVideoModal function REMOVED - using new TikTok-style version instead
 
-    // Kept helper for reference if needed
-    function resetVideoPlayerUI() {
-        const player = document.getElementById('main-video-player');
-        const speedBtn = document.getElementById('video-speed-btn');
-        if (player) {
-            player.playbackRate = 1.0;
-        }
-        if (speedBtn) {
-            speedBtn.innerText = '2x Speed';
-            speedBtn.style.background = 'rgba(255, 255, 255, 0.2)';
-            speedBtn.style.color = '#fff';
-        }
-    }
-
-    // Duplicate function removed/replaced to avoid conflict
-    function closeVideoModalLegacy() {
-        const modal = document.getElementById('video-modal');
-        if (modal) modal.style.display = 'none';
-    }
 
     function toggleVideoSpeed() {
         const player = document.getElementById('main-video-player');
@@ -1586,36 +1583,23 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Make functions globally available for inline onclick handlers
     // Make functions globally available for inline onclick handlers
-    window.closeVideoModal = closeVideoModal;
-    window.toggleVideoSpeed = toggleVideoSpeed;
-
-    function shareVideoToWhatsApp() {
-        const message = encodeURIComponent("Check out this product from CityFashionWear!");
-        const url = `https://wa.me/?text=${message}`;
-        window.open(url, '_blank');
-    }
-    window.shareVideoToWhatsApp = shareVideoToWhatsApp;
-
     // Make it globally accessible
     window.handleNewsletterSignup = handleNewsletterSignup;
 
     // Location Link Handler
     function openLocation(event) {
         event.preventDefault();
-        // Open Google Maps location for Besishahar, Lamjung, Nepal
-        const mapsUrl = 'https://www.google.com/maps/search/?api=1&query=Besishahar,+Lamjung,+Nepal';
+        // Open specific Google Maps location for CityFashionWear
+        const mapsUrl = 'https://maps.app.goo.gl/beBVWEEzxhGrD69y5';
         window.open(mapsUrl, '_blank');
     }
 
     // Make it globally accessible
-    window.openLocation = openLocation;
-
     // ========== REEL / TIKTOK-STYLE NAVIGATION SYSTEM ==========
     let currentReelIndex = 0;
     // === OLD VIDEO REEL/MODAL SYSTEM COMPLETELY REMOVED ===
     // New TikTok-style video modal implementation is at the end of this file
-    window.addToCartReel = addToCartReel;
-    window.shareVideoToWhatsApp = shareVideoToWhatsApp;
+
     // Helper: Fisher-Yates Shuffle
     function shuffleArray(array) {
         for (let i = array.length - 1; i > 0; i--) {
@@ -1625,10 +1609,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return array;
     }
 
-    window.toggleAutoScroll = toggleAutoScroll;
-    window.showPrevReel = showPrevReel;
 
-    window.showNextReel = showNextReel;
 
     // Theme Toggle Initialization
     function initializeThemeToggle() {
@@ -1886,65 +1867,65 @@ document.addEventListener('DOMContentLoaded', () => {
     detectSeason();
 
     console.log('App Initialized Fully');
-});
 
-// ============================================
-// TikTok-Style Video Modal Implementation
-// ============================================
+    // ============================================
+    // TikTok-Style Video Modal Implementation
+    // ============================================
 
-let isAutoScrollEnabled = false;
+    // ============================================
 
-function toggleAutoScroll() {
-    isAutoScrollEnabled = !isAutoScrollEnabled;
-    const btn = document.querySelector('.video-auto-scroll-btn');
-    const status = btn.querySelector('.auto-scroll-status');
+    function toggleAutoScroll() {
+        isAutoScrollEnabled = !isAutoScrollEnabled;
+        const btn = document.getElementById('auto-scroll-toggle');
+        if (!btn) return;
 
-    if (isAutoScrollEnabled) {
-        btn.classList.add('active');
-        status.textContent = 'ON';
-    } else {
-        btn.classList.remove('active');
-        status.textContent = 'OFF';
+        const status = btn.querySelector('.auto-scroll-status');
+
+        if (isAutoScrollEnabled) {
+            btn.classList.add('active');
+            if (status) status.textContent = 'ON';
+        } else {
+            btn.classList.remove('active');
+            if (status) status.textContent = 'OFF';
+        }
     }
-}
-window.toggleAutoScroll = toggleAutoScroll;
 
-// Format numbers like TikTok (1234 -> 1.2K)
-function formatNumber(num) {
-    if (num >= 1000000) {
-        return (num / 1000000).toFixed(1) + 'M';
+    // Format numbers like TikTok (1234 -> 1.2K)
+    function formatNumber(num) {
+        if (num >= 1000000) {
+            return (num / 1000000).toFixed(1) + 'M';
+        }
+        if (num >= 1000) {
+            return (num / 1000).toFixed(1) + 'K';
+        }
+        return num;
     }
-    if (num >= 1000) {
-        return (num / 1000).toFixed(1) + 'K';
+
+    // Video likes storage (localStorage)
+    function getVideoLikes() {
+        const likes = localStorage.getItem('videoLikes');
+        return likes ? JSON.parse(likes) : {};
     }
-    return num;
-}
 
-// Video likes storage (localStorage)
-function getVideoLikes() {
-    const likes = localStorage.getItem('videoLikes');
-    return likes ? JSON.parse(likes) : {};
-}
+    function saveVideoLikes(likesData) {
+        localStorage.setItem('videoLikes', JSON.stringify(likesData));
+    }
 
-function saveVideoLikes(likesData) {
-    localStorage.setItem('videoLikes', JSON.stringify(likesData));
-}
+    // Create a single video element for TikTok-style view
+    function createTikTokVideoElement(product, index, allVideos) {
+        const videoDiv = document.createElement('div');
+        videoDiv.className = 'video';
+        videoDiv.dataset.index = index;
 
-// Create a single video element for TikTok-style view
-function createTikTokVideoElement(product, index, allVideos) {
-    const videoDiv = document.createElement('div');
-    videoDiv.className = 'video';
-    videoDiv.dataset.index = index;
+        // Check if user has liked this video
+        const likes = getVideoLikes();
+        const likeCount = likes[product.name] || 0;
+        const isLiked = localStorage.getItem(`liked_${product.name}`) === 'true';
 
-    // Check if user has liked this video
-    const likes = getVideoLikes();
-    const likeCount = likes[product.name] || 0;
-    const isLiked = localStorage.getItem(`liked_${product.name}`) === 'true';
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+        const videoSrc = isIOS ? product.image + '#t=0.001' : product.image;
 
-    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-    const videoSrc = isIOS ? product.image + '#t=0.001' : product.image;
-
-    videoDiv.innerHTML = `
+        videoDiv.innerHTML = `
         <!-- 2x Speed Indicator -->
         <div class="speed-indicator">
             <span class="material-icons">fast_forward</span>
@@ -1952,7 +1933,6 @@ function createTikTokVideoElement(product, index, allVideos) {
         </div>
 
         <video class="video__player" 
-               loop="loop" 
                playsinline 
                webkit-playsinline="true" 
 
@@ -1975,7 +1955,7 @@ function createTikTokVideoElement(product, index, allVideos) {
                 <p>Cart</p>
             </div>
             <div class="videoSideBar__options share-btn" data-product="${product.name}">
-                <i class="fab fa-whatsapp fa-spin" style="font-size: 32px;"></i>
+                <i class="fab fa-whatsapp" style="font-size: 32px;"></i>
                 <p>Order</p>
             </div>
         </section>
@@ -1995,226 +1975,354 @@ function createTikTokVideoElement(product, index, allVideos) {
         </div>
     `;
 
-    // Handle Auto Scroll
-    const video = videoDiv.querySelector('video');
-    if (video) {
-        video.onended = () => {
-            if (isAutoScrollEnabled) {
+        // Handle Auto Scroll
+        const video = videoDiv.querySelector('video');
+        if (video) {
+            video.onended = () => {
                 const videoContainer = document.getElementById('videoContainer');
-                const videos = videoContainer.querySelectorAll('.video');
-                const currentScroll = videoContainer.scrollTop;
-                const videoHeight = window.innerHeight;
-                const currentIndex = Math.round(currentScroll / videoHeight);
+                if (!videoContainer) return;
 
-                let nextIndex = currentIndex + 1;
-                if (nextIndex >= videos.length) {
-                    nextIndex = 0; // Loop back to start
+                if (isAutoScrollEnabled) {
+                    const videos = videoContainer.querySelectorAll('.video');
+                    const currentScroll = videoContainer.scrollTop;
+                    const videoHeight = window.innerHeight;
+                    const currentIndex = Math.round(currentScroll / videoHeight);
+
+                    let nextIndex = currentIndex + 1;
+                    if (nextIndex >= videos.length) {
+                        nextIndex = 0; // Loop back to start
+                    }
+
+                    const nextVideoContainer = videos[nextIndex];
+                    if (nextVideoContainer) {
+                        nextVideoContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+                        // Play the next video after scroll finishes
+                        setTimeout(() => {
+                            const nextVideo = nextVideoContainer.querySelector('.video__player');
+                            if (nextVideo) {
+                                nextVideo.muted = false;
+                                nextVideo.volume = 1.0;
+                                nextVideo.play().catch(console.error);
+                            }
+                        }, 600);
+                    }
+                } else {
+                    // Auto-scroll is OFF, so loop the same video
+                    video.currentTime = 0;
+                    video.play().catch(console.error);
+                }
+            };
+
+            // Force unmute and full volume on the element itself
+            video.muted = false;
+            video.volume = 1.0;
+        }
+
+        return videoDiv;
+    }
+
+
+    // Open the TikTok-style video modal
+    function openVideoModal(startProductImage, productList, startIndex) {
+        const modal = document.getElementById('video-modal');
+        const videoContainer = document.getElementById('videoContainer');
+
+        if (!modal || !videoContainer) {
+            return;
+        }
+
+
+        // Filter to only video products
+        const videoProducts = productList.filter(p => {
+            const isVideo = p.image.toLowerCase().endsWith('.mov') || p.image.toLowerCase().endsWith('.mp4');
+            return isVideo;
+        });
+
+
+
+        if (videoProducts.length === 0) {
+            console.error('No video products found');
+            return;
+        }
+
+
+
+        // Find the correct start index in video-only list
+        const actualStartIndex = videoProducts.findIndex(p => p.image === startProductImage);
+        const scrollToIndex = actualStartIndex >= 0 ? actualStartIndex : 0;
+
+        // Clear and rebuild the video container
+        videoContainer.innerHTML = '';
+        videoContainer.tabIndex = -1; // Make it focusable for keyboard events
+        videoProducts.forEach((product, index) => {
+            const videoElement = createTikTokVideoElement(product, index, videoProducts);
+            videoContainer.appendChild(videoElement);
+        });
+
+        // Show modal
+        modal.style.display = 'flex';
+        videoContainer.focus(); // Focus for immediate keyboard support
+
+
+        // Push history state for back button support
+        if (!history.state || history.state.modal !== 'video') {
+            history.pushState({ modal: 'video' }, '', '');
+        }
+
+        // Setup observers and interactions immediately
+        setupTikTokVideoInteractions(videoProducts);
+        setupTikTokVideoScrollObserver();
+
+        // Scroll to the starting video
+        const startVideoContainer = videoContainer.children[scrollToIndex];
+        if (startVideoContainer) {
+            startVideoContainer.scrollIntoView({ behavior: 'instant', block: 'start' });
+
+            // Explicitly play and unmute the first video
+            const firstVideo = startVideoContainer.querySelector('.video__player');
+            if (firstVideo) {
+                firstVideo.muted = false;
+                firstVideo.volume = 1.0;
+                // Use a short delay only if necessary, but try immediately first
+                firstVideo.play().catch(err => {
+                    console.log('First video play blocked, trying with muted=true as fallback:', err);
+                    // If it really fails, we might have to mute, but let's try to stay unmuted
+                });
+            }
+        }
+    }
+
+    // Setup all video interactions (tap, like, cart, share)
+    function setupTikTokVideoInteractions(videoProducts) {
+        const videoContainer = document.getElementById('videoContainer');
+
+        // Navigation gestures
+        let navTouchStartY = 0;
+        let isNavigating = false;
+
+        videoContainer.addEventListener('touchstart', (e) => {
+            const touch = e.touches[0];
+            navTouchStartY = touch.clientY;
+        }, { passive: true });
+
+        // Handle vertical navigation swipe
+        videoContainer.addEventListener('touchend', (e) => {
+            if (isNavigating) return;
+
+            const touchEndY = e.changedTouches[0].clientY;
+            const deltaY = navTouchStartY - touchEndY;
+            const threshold = 50; // Minimum swipe distance
+
+            if (Math.abs(deltaY) > threshold) {
+                isNavigating = true;
+                const videoHeight = window.innerHeight;
+                const currentScroll = videoContainer.scrollTop;
+                const currentIndex = Math.round(currentScroll / videoHeight);
+                const videos = videoContainer.querySelectorAll('.video');
+
+                let targetIndex = currentIndex;
+                if (deltaY > 0) { // Swipe up -> Next
+                    targetIndex = Math.min(videos.length - 1, currentIndex + 1);
+                } else { // Swipe down -> Prev
+                    targetIndex = Math.max(0, currentIndex - 1);
                 }
 
                 videoContainer.scrollTo({
-                    top: nextIndex * videoHeight,
+                    top: targetIndex * videoHeight,
                     behavior: 'smooth'
                 });
+
+                // Re-enable navigation after transition
+                setTimeout(() => { isNavigating = false; }, 500);
             }
+        }, { passive: true });
+
+
+
+
+        // Like button functionality
+        videoContainer.addEventListener('click', (e) => {
+            const likeBtn = e.target.closest('.like-btn');
+            if (likeBtn) {
+                e.stopPropagation();
+                const productName = likeBtn.dataset.product;
+                const icon = likeBtn.querySelector('.material-icons');
+                const count = likeBtn.querySelector('.like-count');
+                const likes = getVideoLikes();
+
+                if (likeBtn.classList.contains('liked')) {
+                    // Unlike
+                    likeBtn.classList.remove('liked');
+                    icon.textContent = 'favorite_border';
+                    likes[productName] = Math.max(0, (likes[productName] || 0) - 1);
+                    localStorage.removeItem(`liked_${productName}`);
+                } else {
+                    // Like
+                    likeBtn.classList.add('liked');
+                    icon.textContent = 'favorite';
+                    likes[productName] = (likes[productName] || 0) + 1;
+                    localStorage.setItem(`liked_${productName}`, 'true');
+                }
+
+                count.textContent = formatNumber(likes[productName]);
+                saveVideoLikes(likes);
+            }
+        });
+
+        // Add to cart button
+        videoContainer.addEventListener('click', (e) => {
+            const cartBtn = e.target.closest('.cart-btn');
+            if (cartBtn) {
+                e.stopPropagation();
+                const index = parseInt(cartBtn.dataset.index);
+                const product = videoProducts[index];
+                if (product && typeof addToCart === 'function') {
+                    addToCart(product);
+                    // Visual feedback
+                    const icon = cartBtn.querySelector('.material-icons');
+                    icon.classList.add('fa-bounce');
+                    setTimeout(() => icon.classList.remove('fa-bounce'), 1000);
+                }
+            }
+        });
+
+        // Keyboard navigation is now handled by a single persistent listener
+        // attached at the end of DOMContentLoaded to prevent accumulation.
+
+        // Speed hold is now handled by the global trackers and listeners 
+        // initialized at the top of DOMContentLoaded
+        videoContainer.addEventListener('pointerdown', (e) => {
+            const shareBtn = e.target.closest('.share-btn');
+            if (shareBtn) {
+                isLongPress = false;
+                const video = e.target.closest('.video').querySelector('.video__player');
+                const speedIndicator = e.target.closest('.video').querySelector('.speed-indicator');
+
+                if (video && speedIndicator) {
+                    activeSpeedVideo = video;
+                    activeSpeedIndicator = speedIndicator;
+
+                    // Start timer to detect long press
+                    speedHoldTimer = setTimeout(() => {
+                        isLongPress = true;
+                        if (activeSpeedVideo) activeSpeedVideo.playbackRate = 2.0;
+                        if (activeSpeedIndicator) activeSpeedIndicator.classList.add('show');
+                    }, 200); // 200ms threshold for 2x speed
+                }
+            }
+        });
+
+        // Also reset if user scrolls away
+        videoContainer.addEventListener('scroll', resetSpeed, { passive: true });
+
+        videoContainer.addEventListener('click', (e) => {
+            const shareBtn = e.target.closest('.share-btn');
+            if (shareBtn) {
+                e.stopPropagation();
+
+                // If it was a long press (2x speed), don't open the share link
+                if (isLongPress) {
+                    isLongPress = false;
+                    return;
+                }
+
+                const productName = shareBtn.dataset.product;
+                const baseUrl = window.location.href.split('?')[0];
+                const productUrl = `${baseUrl}?product=${encodeURIComponent(productName)}`;
+                const phone = "9779846181027";
+                const msg = encodeURIComponent(`Hello, I want to buy: ${productName} See it here: ${productUrl}`);
+                window.open(`https://wa.me/${phone}?text=${msg}`, '_blank');
+            }
+        });
+
+
+    }
+
+    // Setup IntersectionObserver for auto-play on scroll
+    function setupTikTokVideoScrollObserver() {
+        const videoContainer = document.getElementById('videoContainer');
+
+        const observerOptions = {
+            root: videoContainer,
+            threshold: 0.6
         };
 
-        // Force unmute and full volume on the element itself
-        video.muted = false;
-        video.volume = 1.0;
-    }
+        const tikTokVideoObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                const video = entry.target.querySelector('.video__player');
+                if (entry.isIntersecting) {
+                    // Play video when in view
+                    video.muted = false;
+                    video.volume = 1.0;
+                    video.play().catch(err => {
+                        console.log('Autoplay prevented, trying muted:', err);
+                        // If blocked, some browsers allow muted autoplay as fallback
+                        // but the user wants unmuted, so we just log it.
+                    });
 
-    return videoDiv;
-}
-
-
-// Open the TikTok-style video modal
-function openVideoModal(startProductImage, productList, startIndex) {
-    const modal = document.getElementById('video-modal');
-    const videoContainer = document.getElementById('videoContainer');
-
-    if (!modal || !videoContainer) {
-        return;
-    }
-
-
-    // Filter to only video products
-    const videoProducts = productList.filter(p => {
-        const isVideo = p.image.toLowerCase().endsWith('.mov') || p.image.toLowerCase().endsWith('.mp4');
-        return isVideo;
-    });
-
-
-
-    if (videoProducts.length === 0) {
-        console.error('No video products found');
-        return;
-    }
-
-
-
-    // Find the correct start index in video-only list
-    const actualStartIndex = videoProducts.findIndex(p => p.image === startProductImage);
-    const scrollToIndex = actualStartIndex >= 0 ? actualStartIndex : 0;
-
-    // Clear and rebuild the video container
-    videoContainer.innerHTML = '';
-    videoContainer.tabIndex = -1; // Make it focusable for keyboard events
-    videoProducts.forEach((product, index) => {
-        const videoElement = createTikTokVideoElement(product, index, videoProducts);
-        videoContainer.appendChild(videoElement);
-    });
-
-    // Show modal
-    modal.style.display = 'flex';
-    videoContainer.focus(); // Focus for immediate keyboard support
-
-
-    // Push history state for back button support
-    if (!history.state || history.state.modal !== 'video') {
-        history.pushState({ modal: 'video' }, '', '');
-    }
-
-    // Setup observers and interactions immediately
-    setupTikTokVideoInteractions(videoProducts);
-    setupTikTokVideoScrollObserver();
-
-    // Scroll to the starting video
-    const startVideoContainer = videoContainer.children[scrollToIndex];
-    if (startVideoContainer) {
-        startVideoContainer.scrollIntoView({ behavior: 'instant', block: 'start' });
-
-        // Explicitly play and unmute the first video
-        const firstVideo = startVideoContainer.querySelector('.video__player');
-        if (firstVideo) {
-            firstVideo.muted = false;
-            firstVideo.volume = 1.0;
-            // Use a short delay only if necessary, but try immediately first
-            firstVideo.play().catch(err => {
-                console.log('First video play blocked, trying with muted=true as fallback:', err);
-                // If it really fails, we might have to mute, but let's try to stay unmuted
+                } else {
+                    // Pause video when out of view
+                    video.pause();
+                }
             });
+        }, observerOptions);
+
+        // Observe all video containers
+        const allVideoContainers = document.querySelectorAll('.video');
+        allVideoContainers.forEach(container => {
+            tikTokVideoObserver.observe(container);
+        });
+    }
+
+    // Close video modal
+    function closeVideoModal() {
+        // If we're coming from a UI button click (not popstate), we go back in history
+        // This will trigger the popstate listener which handles the actual UI closing
+        if (history.state && history.state.modal === 'video') {
+            history.back();
+        } else {
+            // Fallback: If no history state but modal is open, close manually
+            const modal = document.getElementById('video-modal');
+            const videoContainer = document.getElementById('videoContainer');
+            if (modal) modal.style.display = 'none';
+            if (videoContainer) {
+                const videos = videoContainer.querySelectorAll('video');
+                videos.forEach(v => {
+                    v.playbackRate = 1.0; // Ensure speed is reset on close
+                    v.pause();
+                    v.src = '';
+                });
+                videoContainer.innerHTML = '';
+                resetSpeed(); // Clear variables
+            }
         }
     }
-}
-
-// Setup all video interactions (tap, like, cart, share)
-function setupTikTokVideoInteractions(videoProducts) {
-    const videoContainer = document.getElementById('videoContainer');
-
-    // Navigation gestures
-    let navTouchStartY = 0;
-    let isNavigating = false;
-
-    videoContainer.addEventListener('touchstart', (e) => {
-        const touch = e.touches[0];
-        navTouchStartY = touch.clientY;
-    }, { passive: true });
-
-    // Handle vertical navigation swipe
-    videoContainer.addEventListener('touchend', (e) => {
-        if (isNavigating) return;
-
-        const touchEndY = e.changedTouches[0].clientY;
-        const deltaY = navTouchStartY - touchEndY;
-        const threshold = 50; // Minimum swipe distance
-
-        if (Math.abs(deltaY) > threshold) {
-            isNavigating = true;
-            const videoHeight = window.innerHeight;
-            const currentScroll = videoContainer.scrollTop;
-            const currentIndex = Math.round(currentScroll / videoHeight);
-            const videos = videoContainer.querySelectorAll('.video');
-
-            let targetIndex = currentIndex;
-            if (deltaY > 0) { // Swipe up -> Next
-                targetIndex = Math.min(videos.length - 1, currentIndex + 1);
-            } else { // Swipe down -> Prev
-                targetIndex = Math.max(0, currentIndex - 1);
-            }
-
-            videoContainer.scrollTo({
-                top: targetIndex * videoHeight,
-                behavior: 'smooth'
-            });
-
-            // Re-enable navigation after transition
-            setTimeout(() => { isNavigating = false; }, 500);
-        }
-    }, { passive: true });
 
 
 
-
-    // Like button functionality
-    videoContainer.addEventListener('click', (e) => {
-        const likeBtn = e.target.closest('.like-btn');
-        if (likeBtn) {
-            e.stopPropagation();
-            const productName = likeBtn.dataset.product;
-            const icon = likeBtn.querySelector('.material-icons');
-            const count = likeBtn.querySelector('.like-count');
-            const likes = getVideoLikes();
-
-            if (likeBtn.classList.contains('liked')) {
-                // Unlike
-                likeBtn.classList.remove('liked');
-                icon.textContent = 'favorite_border';
-                likes[productName] = Math.max(0, (likes[productName] || 0) - 1);
-                localStorage.removeItem(`liked_${productName}`);
-            } else {
-                // Like
-                likeBtn.classList.add('liked');
-                icon.textContent = 'favorite';
-                likes[productName] = (likes[productName] || 0) + 1;
-                localStorage.setItem(`liked_${productName}`, 'true');
-            }
-
-            count.textContent = formatNumber(likes[productName]);
-            saveVideoLikes(likes);
-        }
-    });
-
-    // Add to cart button
-    videoContainer.addEventListener('click', (e) => {
-        const cartBtn = e.target.closest('.cart-btn');
-        if (cartBtn) {
-            e.stopPropagation();
-            const index = parseInt(cartBtn.dataset.index);
-            const product = videoProducts[index];
-            if (product && typeof addToCart === 'function') {
-                addToCart(product);
-                // Visual feedback
-                const icon = cartBtn.querySelector('.material-icons');
-                icon.classList.add('fa-bounce');
-                setTimeout(() => icon.classList.remove('fa-bounce'), 1000);
-            }
-        }
-    });
-
-    // Keyboard navigation
+    // Single persistent Keyboard navigation handler
     const handleKeyDown = (e) => {
-        if (modal.style.display !== 'flex') return;
+        const modal = document.getElementById('video-modal');
+        const videoContainer = document.getElementById('videoContainer');
+        if (!modal || modal.style.display !== 'flex' || !videoContainer) return;
 
         const videos = videoContainer.querySelectorAll('.video');
+        if (videos.length === 0) return;
+
         const currentScroll = videoContainer.scrollTop;
         const videoHeight = window.innerHeight;
         const currentIndex = Math.round(currentScroll / videoHeight);
 
         if (e.key === 'ArrowDown') {
-            e.preventDefault();
             if (currentIndex < videos.length - 1) {
-                videoContainer.scrollTo({
-                    top: (currentIndex + 1) * videoHeight,
-                    behavior: 'smooth'
-                });
+                e.preventDefault();
+                videos[currentIndex + 1].scrollIntoView({ behavior: 'smooth', block: 'start' });
             }
         } else if (e.key === 'ArrowUp') {
-            e.preventDefault();
             if (currentIndex > 0) {
-                videoContainer.scrollTo({
-                    top: (currentIndex - 1) * videoHeight,
-                    behavior: 'smooth'
-                });
+                e.preventDefault();
+                videos[currentIndex - 1].scrollIntoView({ behavior: 'smooth', block: 'start' });
             }
         } else if (e.key === ' ' || e.key === 'k') { // Space or K to play/pause
             e.preventDefault();
@@ -2229,137 +2337,20 @@ function setupTikTokVideoInteractions(videoProducts) {
                 }
             }
         }
-
     };
 
     window.addEventListener('keydown', handleKeyDown);
 
-    // Share button - Click to share, Hold for 2x speed
-    let speedHoldTimer;
-    let isLongPress = false;
+    // --- Global Function Assignments (Expose to HTML) ---
+    // Assigned at the end to ensure all functions are defined
+    window.toggleAutoScroll = toggleAutoScroll;
+    window.openVideoModal = openVideoModal;
+    window.closeVideoModal = closeVideoModal;
+    window.openLocation = openLocation;
+    window.handleNewsletterSignup = handleNewsletterSignup;
+    window.downloadSearchHistory = downloadSearchHistory;
+    window.toggleVideoSpeed = toggleVideoSpeed;
 
-    videoContainer.addEventListener('pointerdown', (e) => {
-        const shareBtn = e.target.closest('.share-btn');
-        if (shareBtn) {
-            isLongPress = false;
-            const video = e.target.closest('.video').querySelector('.video__player');
-            const speedIndicator = e.target.closest('.video').querySelector('.speed-indicator');
+    console.log('TikTok video modal functions initialized');
 
-            // Start timer to detect long press
-            speedHoldTimer = setTimeout(() => {
-                if (video && speedIndicator) {
-                    isLongPress = true;
-                    video.playbackRate = 2.0;
-                    speedIndicator.classList.add('show');
-                }
-            }, 200); // 200ms threshold for 2x speed
-        }
-    });
-
-    const resetSpeed = (e) => {
-        const shareBtn = e.target.closest('.share-btn');
-        if (shareBtn) {
-            clearTimeout(speedHoldTimer);
-            const video = e.target.closest('.video').querySelector('.video__player');
-            const speedIndicator = e.target.closest('.video').querySelector('.speed-indicator');
-            if (video && speedIndicator) {
-                video.playbackRate = 1.0;
-                speedIndicator.classList.remove('show');
-            }
-            // Delay resetting isLongPress to catch the click event
-            setTimeout(() => { if (isLongPress) isLongPress = false; }, 100);
-        }
-    };
-
-    videoContainer.addEventListener('pointerup', resetSpeed);
-    videoContainer.addEventListener('pointerleave', resetSpeed);
-
-    videoContainer.addEventListener('click', (e) => {
-        const shareBtn = e.target.closest('.share-btn');
-        if (shareBtn) {
-            e.stopPropagation();
-
-            // If it was a long press (2x speed), don't open the share link
-            if (isLongPress) {
-                isLongPress = false;
-                return;
-            }
-
-            const productName = shareBtn.dataset.product;
-            const baseUrl = window.location.href.split('?')[0];
-            const productUrl = `${baseUrl}?product=${encodeURIComponent(productName)}`;
-            const phone = "9779846181027";
-            const msg = encodeURIComponent(`Hello, I want to buy: ${productName} See it here: ${productUrl}`);
-            window.open(`https://wa.me/${phone}?text=${msg}`, '_blank');
-        }
-    });
-
-
-}
-
-// Setup IntersectionObserver for auto-play on scroll
-function setupTikTokVideoScrollObserver() {
-    const videoContainer = document.getElementById('videoContainer');
-
-    const observerOptions = {
-        root: videoContainer,
-        threshold: 0.6
-    };
-
-    const tikTokVideoObserver = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-            const video = entry.target.querySelector('.video__player');
-            if (entry.isIntersecting) {
-                // Play video when in view
-                video.muted = false;
-                video.volume = 1.0;
-                video.play().catch(err => {
-                    console.log('Autoplay prevented, trying muted:', err);
-                    // If blocked, some browsers allow muted autoplay as fallback
-                    // but the user wants unmuted, so we just log it.
-                });
-
-            } else {
-                // Pause video when out of view
-                video.pause();
-            }
-        });
-    }, observerOptions);
-
-    // Observe all video containers
-    const allVideoContainers = document.querySelectorAll('.video');
-    allVideoContainers.forEach(container => {
-        tikTokVideoObserver.observe(container);
-    });
-}
-
-// Close video modal
-function closeVideoModal() {
-    const modal = document.getElementById('video-modal');
-    const videoContainer = document.getElementById('videoContainer');
-
-    if (modal) {
-        modal.style.display = 'none';
-    }
-
-    // Pause all videos and clear
-    if (videoContainer) {
-        const videos = videoContainer.querySelectorAll('video');
-        videos.forEach(v => {
-            v.pause();
-            v.src = '';
-        });
-        videoContainer.innerHTML = '';
-    }
-
-    // Handle history
-    if (history.state && history.state.modal === 'video') {
-        history.back();
-    }
-}
-
-// Make functions globally accessible
-window.openVideoModal = openVideoModal;
-window.closeVideoModal = closeVideoModal;
-
-console.log('TikTok video modal functions initialized');
+}); // End of DOMContentLoaded

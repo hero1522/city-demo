@@ -658,6 +658,15 @@ body.dark-mode .logo {
         display: block;
         animation: fadeIn 0.2s ease;
     }
+
+    /* Flip sub-menus to open left-wards for items pinned to the right (Ladies, Baby) */
+    .nav-links .dropdown:nth-last-child(-n+2) .submenu {
+        left: auto;
+        right: 100%;
+        margin-left: 0;
+        margin-right: -2px;
+        /* Overlap slightly to prevent gap */
+    }
 }
 
 /* Mobile Nested - Accordion style */
@@ -927,12 +936,22 @@ body.dark-mode .logo {
 }
 
 /* Ensure submenu hover bridge */
-.dropdown-content .has-children:hover>.submenu {
-    display: block;
-    margin-left: -5px;
-    /* Pull closer to overlap border slightly */
-    padding-left: 5px;
-    /* Push content back */
+@media (min-width: 769px) {
+    .dropdown-content .has-children:hover>.submenu {
+        display: block;
+        margin-left: -5px;
+        /* Pull closer to overlap border slightly */
+        padding-left: 5px;
+        /* Push content back */
+    }
+
+    /* Bridge for flipped menus */
+    .nav-links .dropdown:nth-last-child(-n+2) .has-children:hover>.submenu {
+        margin-left: 0;
+        margin-right: -5px;
+        padding-left: 0;
+        padding-right: 5px;
+    }
 }
 
 
