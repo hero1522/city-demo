@@ -16,7 +16,10 @@
 
 /* TikTok-style vertical scrolling container */
 .app__videos {
+    height: 100dvh;
     height: 100vh;
+    /* Fallback */
+    height: 100dvh;
     width: 100%;
     max-width: 500px;
     margin: 0 auto;
@@ -35,7 +38,10 @@
 /* Individual video container */
 .video {
     background-color: #1a1a1a;
+    height: 100dvh;
     height: 100vh;
+    /* Fallback */
+    height: 100dvh;
     width: 100%;
     scroll-snap-align: start;
     scroll-snap-stop: always;
@@ -188,8 +194,8 @@
     padding: 20px;
     padding-right: 80px;
     /* Keep text clear of sidebar */
-    padding-bottom: 70px;
-    /* Space for native controls */
+    padding-bottom: calc(100px + env(safe-area-inset-bottom, 0px));
+    /* Space for native controls + safe areas for iPhone/Android */
     z-index: 12;
     background: linear-gradient(to top, rgba(0, 0, 0, 0.8) 0%, rgba(0, 0, 0, 0.4) 60%, transparent 100%);
     pointer-events: none;
@@ -299,7 +305,8 @@
 }
 
 .video-auto-scroll-btn.active {
-    background: #10b981; /* Emerald/Green as per user image */
+    background: #10b981;
+    /* Emerald/Green as per user image */
     border-color: #34d399;
     box-shadow: 0 0 10px rgba(16, 185, 129, 0.5);
 }
@@ -326,7 +333,15 @@
     .videoFooter {
         bottom: 0;
         padding: 15px;
-        padding-bottom: 50px;
+        /* Aggressive padding for high-aspect ratio phones like Samsung M30s */
+        padding-bottom: calc(130px + env(safe-area-inset-bottom, 20px));
+    }
+
+    /* Move the native video controls bar up so it's not at the very edge */
+    .video__player {
+        height: calc(100% - 40px);
+        margin-bottom: 40px;
+        background: black;
     }
 
 

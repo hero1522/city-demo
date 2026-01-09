@@ -14,6 +14,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentPage = 1;
     const itemsPerPage = 28;
     let isAutoScrollEnabled = false;
+    let lastViewKey = ''; // Track category-sub-page for smart scrolling
 
     // --- Global Function Assignments will be done at the end of DOMContentLoaded ---
 
@@ -126,12 +127,14 @@ document.addEventListener('DOMContentLoaded', () => {
             if (categoryParam) {
                 // Restore from URL params
                 const sub = subParam || 'all';
-                handleCategoryNavigation(categoryParam, sub, false);
-                history.replaceState({ category: categoryParam, sub: sub }, '', window.location);
+                const pageNum = parseInt(urlParams.get('page') || '1');
+                handleCategoryNavigation(categoryParam, sub, false, pageNum);
+                history.replaceState({ category: categoryParam, sub: sub, page: pageNum }, '', window.location);
             } else {
                 // Standard Load
-                handleCategoryNavigation('all', 'all', false);
-                history.replaceState({ category: 'all', sub: 'all' }, '', window.location);
+                const pageNum = parseInt(urlParams.get('page') || '1');
+                handleCategoryNavigation('all', 'all', false, pageNum);
+                history.replaceState({ category: 'all', sub: 'all', page: pageNum }, '', window.location);
             }
         }
     } else {
@@ -141,10 +144,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Core Pagination Logic ---
 
+    // Helper for Smooth Scrolling to Products
+    function scrollToProductsTop() {
+        const yOffset = -140; // Adjusted for better header visibility with sticky nav
+        const element = document.getElementById('breadcrumb');
+        if (element) {
+            const y = element.getBoundingClientRect().top + window.pageYOffset + yOffset;
+            window.scrollTo({ top: y, behavior: 'smooth' });
+        }
+    }
+
     // Entry point for any filter change
-    function applyFilterAndRender(items) {
+    function applyFilterAndRender(items, targetPage = 1) {
         currentFilteredProducts = items;
-        currentPage = 1;
+        currentPage = targetPage;
         displayCurrentPage();
     }
 
@@ -261,9 +274,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     contentEl.setAttribute('webkit-playsinline', 'true');
                     contentEl.autoplay = false; // Disable initial autoplay
                     contentEl.controls = false;
+                    contentEl.muted = true; // Essential for some mobile browsers
+                    contentEl.setAttribute('muted', ''); // HTML attribute for best compatibility
 
-                    // Lazy load strategy: preload none initially
-                    contentEl.preload = 'none';
+                    // Lazy load strategy: preload metadata to show thumbnail faster on iOS
+                    contentEl.preload = 'metadata';
 
                     // Attach to observer
                     videoObserver.observe(contentEl);
@@ -564,16 +579,21 @@ document.addEventListener('DOMContentLoaded', () => {
         // Add listeners
         paginationContainer.querySelectorAll('.page-btn').forEach((btn, index) => {
             btn.addEventListener('click', () => {
-                currentPage = index + 1;
+                const targetPage = index + 1;
+                currentPage = targetPage;
                 displayCurrentPage();
 
-                // Scroll to top of grid
-                const yOffset = -150;
-                const element = document.getElementById('productGrid');
-                if (element) {
-                    const y = element.getBoundingClientRect().top + window.pageYOffset + yOffset;
-                    window.scrollTo({ top: y, behavior: 'smooth' });
-                }
+                // Update URL for pagination
+                const url = new URL(window.location);
+                url.searchParams.set('page', targetPage);
+                history.pushState({
+                    category: url.searchParams.get('category') || 'all',
+                    sub: url.searchParams.get('sub') || 'all',
+                    page: targetPage
+                }, '', url);
+
+                // Scroll to top of products
+                scrollToProductsTop();
             });
         });
     }
@@ -863,11 +883,15 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // Centralized Navigation Function with History Support
-    function handleCategoryNavigation(filterCat, filterSub, addToHistory = true) {
+    function handleCategoryNavigation(filterCat, filterSub, addToHistory = true, targetPage = 1) {
+        const currentViewKey = `${filterCat}-${filterSub}-${targetPage}`;
+        const hasViewChanged = lastViewKey !== currentViewKey;
+        lastViewKey = currentViewKey;
+
         updateBreadcrumb(filterCat, filterSub);
 
         if (filterCat === 'all') {
-            applyFilterAndRender(allProducts);
+            applyFilterAndRender(allProducts, targetPage);
         } else {
             let filtered = allProducts.filter(p => p.category === filterCat);
             if (filterSub && filterSub !== 'all') {
@@ -879,7 +903,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     return sub === filter || sub.startsWith(filter + '/');
                 });
             }
-            applyFilterAndRender(filtered);
+            applyFilterAndRender(filtered, targetPage);
         }
 
         // Update Navbar Visual State
@@ -888,7 +912,15 @@ document.addEventListener('DOMContentLoaded', () => {
         const navBtn = document.querySelector(`.filter-btn[data-filter="${filterCat}"]`);
         if (navBtn) navBtn.classList.add('active');
 
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        // SMART SCROLL:
+        // 1. If it's a direct navbar/logo click (addToHistory=true), scroll to TOP of page
+        // 2. If it's a BACK/FORWARD navigation (addToHistory=false) AND the view (page/cat) actually changed, scroll to grid start.
+        // 3. If it's just closing a modal (view hasn't changed), stay put.
+        if (addToHistory) {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        } else if (hasViewChanged) {
+            scrollToProductsTop();
+        }
 
         // History Management
         if (addToHistory) {
@@ -902,7 +934,14 @@ document.addEventListener('DOMContentLoaded', () => {
             // Clear product param if navigating categories
             url.searchParams.delete('product');
 
-            history.pushState({ category: filterCat, sub: filterSub }, '', url);
+            // Set page param (usually 1 when navigating to fresh category)
+            if (targetPage > 1) {
+                url.searchParams.set('page', targetPage);
+            } else {
+                url.searchParams.delete('page');
+            }
+
+            history.pushState({ category: filterCat, sub: filterSub, page: targetPage }, '', url);
         }
     }
 
@@ -913,17 +952,8 @@ document.addEventListener('DOMContentLoaded', () => {
     if (logoLink) {
         logoLink.addEventListener('click', (e) => {
             e.preventDefault();
-
-            // Reset to All
-            applyFilterAndRender(allProducts);
-            updateBreadcrumb('all', 'all');
-
-            // Update Nav Visuals
-            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-            const allBtn = document.querySelector('.filter-btn[data-filter="all"]');
-            if (allBtn) allBtn.classList.add('active');
-
-            window.scrollTo({ top: 0, behavior: 'smooth' });
+            // Centralized navigation handles products, breadcrumbs, nav visuals, scroll, and URL/History
+            handleCategoryNavigation('all', 'all');
         });
     }
 
@@ -1105,8 +1135,25 @@ document.addEventListener('DOMContentLoaded', () => {
         // save to history (save original query)
         saveSearchHistory(query);
 
-        // Apply synonyms to improve search accuracy
-        // e.g., "women pants" → "ladies pant"
+        // --- NEW: Exact Product Code Logic ---
+        // Pattern matches "number-number-number" (e.g., 27-200-1)
+        const codePattern = /^\d+-\d+-\d+$/;
+        if (codePattern.test(query)) {
+            const exactMatch = allProducts.filter(p => p.name.toLowerCase() === query);
+
+            if (breadcrumbContainer) {
+                if (exactMatch.length === 0) {
+                    breadcrumbContainer.innerHTML = `<span class="cat-link" data-filter="all" data-sub="all">Home</span> <span class="separator">/</span> <span style="color: #ef4444;">Product "${query}" not found</span>`;
+                } else {
+                    breadcrumbContainer.innerHTML = `<span class="cat-link" data-filter="all" data-sub="all">Home</span> <span class="separator">/</span> <span>Product Match: "${query}"</span>`;
+                }
+            }
+
+            applyFilterAndRender(exactMatch);
+            return; // Exit early for exact code lookups
+        }
+
+        // Apply synonyms to improve generic search accuracy
         query = applySynonyms(query);
 
         // Split query into words for multi-word search
@@ -1135,8 +1182,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 // Fuzzy matching for misspellings
                 if (fuzzyMatch(name, word, 2)) matchScore += 20;
-                if (fuzzyMatch(cat, word, 2)) matchScore += 15;
-                if (fuzzyMatch(sub, word, 2)) matchScore += 10;
+                if (fuzzyMatch(cat, word, 1)) matchScore += 15;
+                if (fuzzyMatch(sub, word, 1)) matchScore += 10;
 
                 // Track how many words matched
                 if (combinedText.includes(word) ||
@@ -1198,6 +1245,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function findSuggestions(query) {
         const suggestions = new Set();
         const normalizedQuery = normalizeText(query);
+        const isQueryAlphaOnly = /^[a-z]+$/.test(normalizedQuery);
 
         // Collect unique terms from all products
         const terms = new Set();
@@ -1209,6 +1257,9 @@ document.addEventListener('DOMContentLoaded', () => {
             // Add common product type keywords from names
             const words = p.name.toLowerCase().split(/[-_\s]+/);
             words.forEach(w => {
+                // For Alpha-only queries, skip terms that look like codes (contain numbers or dashes)
+                if (isQueryAlphaOnly && (/\d/.test(w) || w.includes('-'))) return;
+
                 if (w.length > 2) terms.add(w);
             });
         });
@@ -1442,6 +1493,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Handle Browser Back Button
     window.addEventListener('popstate', (event) => {
+        // 0. Restore Navigation State (Prioritize state, fallback to URL params)
+        const urlParams = new URLSearchParams(window.location.search);
+        const stateCat = event.state ? event.state.category : null;
+        const stateSub = event.state ? event.state.sub : null;
+        const statePage = event.state ? event.state.page : null;
+
+        const category = stateCat || urlParams.get('category') || 'all';
+        const sub = stateSub || urlParams.get('sub') || 'all';
+        const pageNum = statePage || parseInt(urlParams.get('page') || '1');
+
+        handleCategoryNavigation(category, sub, false, pageNum);
+
         // 1. Lightbox Closure
         if (lightbox && lightbox.style.display === 'flex') {
             closeLightboxUI();
@@ -1935,9 +1998,10 @@ document.addEventListener('DOMContentLoaded', () => {
         <video class="video__player" 
                playsinline 
                webkit-playsinline="true" 
-
+               preload="metadata"
+               muted
                data-index="${index}" 
-               src="${videoSrc}"
+               data-src="${videoSrc}"
                controls="controls">
         </video>
 
@@ -2250,20 +2314,53 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const tikTokVideoObserver = new IntersectionObserver((entries) => {
             entries.forEach(entry => {
-                const video = entry.target.querySelector('.video__player');
+                const videoContainer = entry.target;
+                const video = videoContainer.querySelector('.video__player');
+                const index = parseInt(video.dataset.index);
+                const videos = document.querySelectorAll('.video');
+
                 if (entry.isIntersecting) {
-                    // Play video when in view
+                    // 1. Play current video
+                    if (video.dataset.src && !video.src) {
+                        video.src = video.dataset.src;
+                        video.load();
+                    }
                     video.muted = false;
                     video.volume = 1.0;
                     video.play().catch(err => {
                         console.log('Autoplay prevented, trying muted:', err);
-                        // If blocked, some browsers allow muted autoplay as fallback
-                        // but the user wants unmuted, so we just log it.
                     });
 
+                    // 2. Pre-fetch next 2 videos for tubular speed
+                    for (let i = 1; i <= 3; i++) {
+                        const nextContainer = videos[index + i];
+                        if (nextContainer) {
+                            const nextVideo = nextContainer.querySelector('.video__player');
+                            if (nextVideo && nextVideo.dataset.src && !nextVideo.src) {
+                                console.log(`Smart Buffer: Pre-fetching video ${index + i}`);
+                                nextVideo.src = nextVideo.dataset.src;
+                                nextVideo.preload = 'auto';
+                            }
+                        }
+                    }
                 } else {
                     // Pause video when out of view
                     video.pause();
+
+                    // 3. GC: Clear source if too far away to save RAM/Bandwidth
+                    // If video is > 5 steps away, nullify src
+                    const currentScroll = document.getElementById('videoContainer').scrollTop;
+                    const videoHeight = window.innerHeight;
+                    const currentIndex = Math.round(currentScroll / videoHeight);
+
+                    if (Math.abs(index - currentIndex) > 5) {
+                        if (video.src) {
+                            console.log(`Smart Buffer: Cleaning up video ${index}`);
+                            video.pause();
+                            video.src = '';
+                            video.load();
+                        }
+                    }
                 }
             });
         }, observerOptions);
