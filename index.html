@@ -137,6 +137,12 @@
 
     <!-- TikTok-Style Video Modal -->
     <div id="video-modal" class="video-modal" style="display: none;">
+        <!-- Auto Scroll Toggle (Top Left) -->
+        <button class="video-auto-scroll-btn" onclick="toggleAutoScroll()">
+            <i class="fas fa-mouse"></i>
+            <span class="auto-scroll-status">OFF</span>
+        </button>
+
         <div class="app__videos" id="videoContainer">
             <!-- Videos will be dynamically loaded here in vertical scroll -->
         </div>

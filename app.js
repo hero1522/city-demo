@@ -45,9 +45,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Auto-open lightbox for better visibility
                 setTimeout(() => openLightbox(foundProduct.image, foundProduct.name), 500);
             } else {
-                // Product not found, show all
-                handleCategoryNavigation('all', 'all', false);
-                history.replaceState({ category: 'all', sub: 'all' }, '', window.location);
+                // Product not found, redirect to 404
+                window.location.href = '404.html';
             }
         } else {
             // Check for Category Link
@@ -1893,6 +1892,23 @@ document.addEventListener('DOMContentLoaded', () => {
 // TikTok-Style Video Modal Implementation
 // ============================================
 
+let isAutoScrollEnabled = false;
+
+function toggleAutoScroll() {
+    isAutoScrollEnabled = !isAutoScrollEnabled;
+    const btn = document.querySelector('.video-auto-scroll-btn');
+    const status = btn.querySelector('.auto-scroll-status');
+
+    if (isAutoScrollEnabled) {
+        btn.classList.add('active');
+        status.textContent = 'ON';
+    } else {
+        btn.classList.remove('active');
+        status.textContent = 'OFF';
+    }
+}
+window.toggleAutoScroll = toggleAutoScroll;
+
 // Format numbers like TikTok (1234 -> 1.2K)
 function formatNumber(num) {
     if (num >= 1000000) {
@@ -1946,15 +1962,6 @@ function createTikTokVideoElement(product, index, allVideos) {
         </video>
 
 
-        
-        <!-- Volume Indicator (Swipe only) -->
-        <div class="video-volume-indicator">
-            <span class="material-icons volume-main-icon">volume_up</span>
-            <div class="volume-bar-container">
-                <div class="volume-bar-fill"></div>
-            </div>
-        </div>
-
 
         
         <!-- Sidebar Actions -->
@@ -1968,8 +1975,8 @@ function createTikTokVideoElement(product, index, allVideos) {
                 <p>Cart</p>
             </div>
             <div class="videoSideBar__options share-btn" data-product="${product.name}">
-                <span class="material-icons">share</span>
-                <p>Share</p>
+                <i class="fab fa-whatsapp fa-spin" style="font-size: 32px;"></i>
+                <p>Order</p>
             </div>
         </section>
         
@@ -1988,9 +1995,30 @@ function createTikTokVideoElement(product, index, allVideos) {
         </div>
     `;
 
-    // Force unmute and full volume on the element itself
+    // Handle Auto Scroll
     const video = videoDiv.querySelector('video');
     if (video) {
+        video.onended = () => {
+            if (isAutoScrollEnabled) {
+                const videoContainer = document.getElementById('videoContainer');
+                const videos = videoContainer.querySelectorAll('.video');
+                const currentScroll = videoContainer.scrollTop;
+                const videoHeight = window.innerHeight;
+                const currentIndex = Math.round(currentScroll / videoHeight);
+
+                let nextIndex = currentIndex + 1;
+                if (nextIndex >= videos.length) {
+                    nextIndex = 0; // Loop back to start
+                }
+
+                videoContainer.scrollTo({
+                    top: nextIndex * videoHeight,
+                    behavior: 'smooth'
+                });
+            }
+        };
+
+        // Force unmute and full volume on the element itself
         video.muted = false;
         video.volume = 1.0;
     }
@@ -2073,70 +2101,18 @@ function openVideoModal(startProductImage, productList, startIndex) {
 function setupTikTokVideoInteractions(videoProducts) {
     const videoContainer = document.getElementById('videoContainer');
 
-    // Touch gestures for volume control (Right side)
-    let touchStartY = 0;
-    let initialVolume = 1;
-    let isRightSide = false;
-    let volumeIndicatorTimeout;
-
-    // Navigation gestures (Left side / General)
+    // Navigation gestures
     let navTouchStartY = 0;
     let isNavigating = false;
 
     videoContainer.addEventListener('touchstart', (e) => {
         const touch = e.touches[0];
-        const rect = videoContainer.getBoundingClientRect();
-        const x = touch.clientX - rect.left;
-
-        touchStartY = touch.clientY;
         navTouchStartY = touch.clientY;
-
-        // Check if touch is on the right 50% of the screen for volume
-        isRightSide = x > rect.width / 2;
-
-        if (isRightSide) {
-            const video = e.target.closest('.video').querySelector('.video__player');
-            if (video) {
-                initialVolume = video.volume;
-            }
-        }
     }, { passive: true });
-
-    videoContainer.addEventListener('touchmove', (e) => {
-        if (!isRightSide) return;
-
-        const touch = e.touches[0];
-        const deltaY = touchStartY - touch.clientY;
-        const sensitivity = 200;
-
-        const video = e.target.closest('.video').querySelector('.video__player');
-        if (video) {
-            let newVolume = initialVolume + (deltaY / sensitivity);
-            newVolume = Math.max(0, Math.min(1, newVolume));
-            video.volume = newVolume;
-
-            const indicator = e.target.closest('.video').querySelector('.video-volume-indicator');
-            const fill = indicator.querySelector('.volume-bar-fill');
-            const icon = indicator.querySelector('.volume-main-icon');
-
-            fill.style.height = `${newVolume * 100}%`;
-            indicator.classList.add('show');
-
-            if (newVolume === 0) icon.textContent = 'volume_off';
-            else if (newVolume < 0.5) icon.textContent = 'volume_down';
-            else icon.textContent = 'volume_up';
-
-            clearTimeout(volumeIndicatorTimeout);
-            volumeIndicatorTimeout = setTimeout(() => {
-                indicator.classList.remove('show');
-            }, 1000);
-        }
-    }, { passive: false });
 
     // Handle vertical navigation swipe
     videoContainer.addEventListener('touchend', (e) => {
         if (isNavigating) return;
-        if (isRightSide && Math.abs(touchStartY - e.changedTouches[0].clientY) > 10) return; // Ignore if it was a volume swipe
 
         const touchEndY = e.changedTouches[0].clientY;
         const deltaY = navTouchStartY - touchEndY;
@@ -2312,8 +2288,9 @@ function setupTikTokVideoInteractions(videoProducts) {
             const productName = shareBtn.dataset.product;
             const baseUrl = window.location.href.split('?')[0];
             const productUrl = `${baseUrl}?product=${encodeURIComponent(productName)}`;
-            const msg = encodeURIComponent(`Check out this product: ${productName}\n\n${productUrl}`);
-            window.open(`https://wa.me/?text=${msg}`, '_blank');
+            const phone = "9779846181027";
+            const msg = encodeURIComponent(`Hello, I want to buy: ${productName} See it here: ${productUrl}`);
+            window.open(`https://wa.me/${phone}?text=${msg}`, '_blank');
         }
     });
 
