@@ -91,8 +91,18 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // Global listeners for reliable reset
-    window.addEventListener('pointerup', resetSpeed);
-    window.addEventListener('pointercancel', resetSpeed);
+    window.addEventListener('pointerup', (e) => {
+        resetSpeed();
+        if (e.target.releasePointerCapture) {
+            e.target.releasePointerCapture(e.pointerId);
+        }
+    });
+    window.addEventListener('pointercancel', (e) => {
+        resetSpeed();
+        if (e.target.releasePointerCapture) {
+            e.target.releasePointerCapture(e.pointerId);
+        }
+    });
 
     // Use the global 'products' variable from products.js
     if (typeof products !== 'undefined') {
@@ -113,8 +123,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 updateBreadcrumb(foundProduct.category, foundProduct.subcategory);
                 applyFilterAndRender([foundProduct]);
 
-                // Auto-open lightbox for better visibility
-                setTimeout(() => openLightbox(foundProduct.image, foundProduct.name), 500);
+                // Auto-open appropriate view
+                const isVideo = foundProduct.image.toLowerCase().endsWith('.mov') || foundProduct.image.toLowerCase().endsWith('.mp4');
+                if (isVideo) {
+                    setTimeout(() => openVideoModal(foundProduct.image, allProducts, 0), 500);
+                } else {
+                    setTimeout(() => openLightbox(foundProduct.image, foundProduct.name), 500);
+                }
             } else {
                 // Product not found, redirect to 404
                 window.location.href = '404.html';
@@ -1989,21 +2004,27 @@ document.addEventListener('DOMContentLoaded', () => {
         const videoSrc = isIOS ? product.image + '#t=0.001' : product.image;
 
         videoDiv.innerHTML = `
-        <!-- 2x Speed Indicator -->
-        <div class="speed-indicator">
-            <span class="material-icons">fast_forward</span>
-            <span>2x Speed</span>
-        </div>
+    <!-- Skeleton Loader -->
+    <div class="video-skeleton">
+        <i class="fas fa-play-circle"></i>
+        <div style="width: 150px; height: 10px; background: rgba(255,255,255,0.05); border-radius: 5px;"></div>
+    </div>
 
-        <video class="video__player" 
-               playsinline 
-               webkit-playsinline="true" 
-               preload="metadata"
-               muted
-               data-index="${index}" 
-               data-src="${videoSrc}"
-               controls="controls">
-        </video>
+    <!-- 2x Speed Indicator -->
+    <div class="speed-indicator">
+        <span class="material-icons">fast_forward</span>
+        <span>2x Speed</span>
+    </div>
+
+    <video class="video__player" 
+           playsinline 
+           webkit-playsinline="true" 
+           preload="none"
+           muted
+           data-index="${index}" 
+           data-src="${videoSrc}"
+           controls="controls">
+    </video>
 
 
 
@@ -2081,6 +2102,38 @@ document.addEventListener('DOMContentLoaded', () => {
             // Force unmute and full volume on the element itself
             video.muted = false;
             video.volume = 1.0;
+
+            // Loading state listeners for skeleton
+            video.addEventListener('playing', () => {
+                videoDiv.classList.add('loaded');
+            });
+
+            video.addEventListener('canplay', () => {
+                // If it's already in view and ready, mark as loaded
+                const rect = videoDiv.getBoundingClientRect();
+                if (rect.top >= 0 && rect.bottom <= window.innerHeight) {
+                    videoDiv.classList.add('loaded');
+                }
+            });
+
+            video.addEventListener('waiting', () => {
+                videoDiv.classList.remove('loaded');
+            });
+
+            video.addEventListener('stalled', () => {
+                // If we stall, try to reload if it's the current video
+                const rect = videoDiv.getBoundingClientRect();
+                if (rect.top >= 0 && rect.bottom <= window.innerHeight) {
+                    console.log('Video stalled, attempting recovery...');
+                    videoDiv.classList.remove('loaded');
+                }
+            });
+
+            // Fast-start: If 4G/Wifi, set preload to auto immediately for better metadata retrieval
+            const conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+            if (conn && (conn.effectiveType === '4g' || !conn.effectiveType)) {
+                video.preload = 'auto';
+            }
         }
 
         return videoDiv;
@@ -2116,6 +2169,19 @@ document.addEventListener('DOMContentLoaded', () => {
         const actualStartIndex = videoProducts.findIndex(p => p.image === startProductImage);
         const scrollToIndex = actualStartIndex >= 0 ? actualStartIndex : 0;
 
+        // Sync Auto Scroll UI button
+        const autoScrollBtn = document.getElementById('auto-scroll-toggle');
+        if (autoScrollBtn) {
+            const status = autoScrollBtn.querySelector('.auto-scroll-status');
+            if (isAutoScrollEnabled) {
+                autoScrollBtn.classList.add('active');
+                if (status) status.textContent = 'ON';
+            } else {
+                autoScrollBtn.classList.remove('active');
+                if (status) status.textContent = 'OFF';
+            }
+        }
+
         // Clear and rebuild the video container
         videoContainer.innerHTML = '';
         videoContainer.tabIndex = -1; // Make it focusable for keyboard events
@@ -2146,12 +2212,16 @@ document.addEventListener('DOMContentLoaded', () => {
             // Explicitly play and unmute the first video
             const firstVideo = startVideoContainer.querySelector('.video__player');
             if (firstVideo) {
+                // Jumpstart load immediately
+                if (!firstVideo.src && firstVideo.dataset.src) {
+                    firstVideo.src = firstVideo.dataset.src;
+                    firstVideo.load();
+                }
                 firstVideo.muted = false;
                 firstVideo.volume = 1.0;
                 // Use a short delay only if necessary, but try immediately first
                 firstVideo.play().catch(err => {
                     console.log('First video play blocked, trying with muted=true as fallback:', err);
-                    // If it really fails, we might have to mute, but let's try to stay unmuted
                 });
             }
         }
@@ -2267,6 +2337,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     activeSpeedVideo = video;
                     activeSpeedIndicator = speedIndicator;
 
+                    // Capture pointer to track movement anywhere on screen
+                    shareBtn.setPointerCapture(e.pointerId);
+
                     // Start timer to detect long press
                     speedHoldTimer = setTimeout(() => {
                         isLongPress = true;
@@ -2292,10 +2365,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
 
                 const productName = shareBtn.dataset.product;
-                const baseUrl = window.location.href.split('?')[0];
+                const baseUrl = window.location.origin + window.location.pathname;
                 const productUrl = `${baseUrl}?product=${encodeURIComponent(productName)}`;
                 const phone = "9779846181027";
-                const msg = encodeURIComponent(`Hello, I want to buy: ${productName} See it here: ${productUrl}`);
+                const msg = encodeURIComponent(`Hello, I want to buy this ${productName}! ✨\nCheck it out here: ${productUrl}`);
                 window.open(`https://wa.me/${phone}?text=${msg}`, '_blank');
             }
         });
@@ -2306,6 +2379,19 @@ document.addEventListener('DOMContentLoaded', () => {
     // Setup IntersectionObserver for auto-play on scroll
     function setupTikTokVideoScrollObserver() {
         const videoContainer = document.getElementById('videoContainer');
+
+        // Low-Data Mode Helper
+        const getBufferSize = () => {
+            const conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+            if (conn) {
+                if (conn.saveData) return 1; // User wants to save data
+                const type = conn.effectiveType;
+                if (type === '4g') return 4;
+                if (type === '3g') return 2;
+                if (type === '2g') return 1;
+            }
+            return 3; // Default fallback
+        };
 
         const observerOptions = {
             root: videoContainer,
@@ -2331,13 +2417,14 @@ document.addEventListener('DOMContentLoaded', () => {
                         console.log('Autoplay prevented, trying muted:', err);
                     });
 
-                    // 2. Pre-fetch next 2 videos for tubular speed
-                    for (let i = 1; i <= 3; i++) {
+                    // 2. Pre-fetch next videos for tubular speed based on network
+                    const bufferSize = getBufferSize();
+                    for (let i = 1; i <= bufferSize; i++) {
                         const nextContainer = videos[index + i];
                         if (nextContainer) {
                             const nextVideo = nextContainer.querySelector('.video__player');
                             if (nextVideo && nextVideo.dataset.src && !nextVideo.src) {
-                                console.log(`Smart Buffer: Pre-fetching video ${index + i}`);
+                                console.log(`Smart Buffer (${navigator.connection?.effectiveType || 'unknown'}): Pre-fetching video ${index + i}`);
                                 nextVideo.src = nextVideo.dataset.src;
                                 nextVideo.preload = 'auto';
                             }
